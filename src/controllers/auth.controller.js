@@ -4,7 +4,7 @@ import { generateToken } from "../utils/generateToken.js";
 export const createAdminUserController = async (req, res) => {
   try {
     const user = await createAdminUser(req.body);
-    res.status(201).json({ token });
+    res.status(201).json({ user });
   } catch (error) {
     res.status(401).json({ error: error.message });
   }

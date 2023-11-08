@@ -4,7 +4,6 @@ export const createAdminUser = async (userData) => {
   try {
     const newUser = new Admin(userData);
     const user = await newUser.save();
-
     return user;
   } catch (error) {
     throw new Error("Failed to create admin user:" + error.message);
