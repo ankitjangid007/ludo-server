@@ -3,12 +3,15 @@ import WinningCash from "../models/winningCash.model.js";
 // Service to create a wallet for a user
 export const createWinCashWallet = async (userId) => {
   try {
-    const newWallet = new WinningCash({
-      user: userId,
-      balance: 0,
-    });
-    const wallet = await newWallet.save();
-    return wallet;
+    const existingWallet = await WinningCash.findOne({ user: userId });
+
+    if (existingWallet) {
+      return existingWallet;
+    }
+
+    const newWallet = new WinningCash({ user });
+    await newWallet.save();
+    return newWallet;
   } catch (error) {
     throw new Error("Could not create Winning Cash Wallet: " + error.message);
   }

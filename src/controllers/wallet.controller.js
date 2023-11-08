@@ -8,16 +8,8 @@ import {
 export const createWalletForUser = async (req, res) => {
   try {
     const userId = req.params.userId;
-    const existingWallet = await getWalletByUserId(userId);
-
-    if (!existingWallet) {
-      const wallet = await createWallet(userId);
-      return res.status(201).json(wallet);
-    } else {
-      return res
-        .status(400)
-        .json({ error: "A wallet already exists for this user" });
-    }
+    const wallet = await createWallet(userId);
+    return res.status(201).json(wallet);
   } catch (error) {
     return res.status(400).json({ error: error.message });
   }

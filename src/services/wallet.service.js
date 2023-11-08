@@ -3,12 +3,15 @@ import Wallet from "../models/wallet.model.js";
 // Service to create a wallet for a user
 export const createWallet = async (userId) => {
   try {
-    const newWallet = new Wallet({
-      user: userId,
-      balance: 0,
-    });
-    const wallet = await newWallet.save();
-    return wallet;
+    const existingWallet = await Wallet.findOne({ user: userId });
+
+    if (existingWallet) {
+      return existingWallet;
+    }
+
+    const newWallet = new Wallet({ user });
+    await newWallet.save();
+    return newWallet;
   } catch (error) {
     throw new Error("Could not create wallet: " + error.message);
   }
