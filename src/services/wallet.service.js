@@ -5,11 +5,13 @@ export const createWallet = async (userId) => {
   try {
     const existingWallet = await Wallet.findOne({ user: userId });
 
+    console.log("wallet::", existingWallet);
+
     if (existingWallet) {
       return existingWallet;
     }
 
-    const newWallet = new Wallet({ user });
+    const newWallet = new Wallet({ user: userId });
     await newWallet.save();
     return newWallet;
   } catch (error) {
