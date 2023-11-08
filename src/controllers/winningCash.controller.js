@@ -8,6 +8,7 @@ import {
 export const createWinningCashWallet = async (req, res) => {
   try {
     const userId = req.params.userId;
+    console.log("11111111111");
     const wallet = await createWinCashWallet(userId);
     return res.status(201).json(wallet);
   } catch (error) {

@@ -5,14 +5,13 @@ export const createWinCashWallet = async (userId) => {
   try {
     const existingWallet = await WinningCash.findOne({ user: userId });
 
-    console.log("winning cash wallet::", existingWallet);
-    if (existingWallet) {
-      return existingWallet;
+    if (!existingWallet) {
+      const newWallet = new WinningCash({ user: userId });
+      await newWallet.save();
+      return newWallet;
     }
 
-    const newWallet = new WinningCash({ user: userId });
-    await newWallet.save();
-    return newWallet;
+    return existingWallet;
   } catch (error) {
     throw new Error("Could not create Winning Cash Wallet: " + error.message);
   }

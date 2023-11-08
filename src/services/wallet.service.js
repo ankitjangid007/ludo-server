@@ -5,15 +5,13 @@ export const createWallet = async (userId) => {
   try {
     const existingWallet = await Wallet.findOne({ user: userId });
 
-    console.log("wallet::", existingWallet);
-
-    if (existingWallet) {
-      return existingWallet;
+    if (!existingWallet) {
+      const newWallet = new Wallet({ user: userId });
+      await newWallet.save();
+      return newWallet;
     }
 
-    const newWallet = new Wallet({ user: userId });
-    await newWallet.save();
-    return newWallet;
+    return existingWallet;
   } catch (error) {
     throw new Error("Could not create wallet: " + error.message);
   }
