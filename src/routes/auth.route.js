@@ -7,6 +7,11 @@ import {
 
 const router = express.Router();
 
+router.get("/ping", (req, res, next) => {
+  console.log("Hi Ping");
+  res.status(200).json({ success: true, message: "Server is running" });
+});
+
 // create admin user
 router.post("/create-login", createAdminUserController);
 
