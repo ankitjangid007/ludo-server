@@ -64,7 +64,6 @@ export const updateBattleResult = async (
     }
 
     existingResult.battleResult = battleResult;
-    existingResult.file = null;
     if (existingResult) {
       const wallet = await WinningCash.findOne({ user: userId });
       const battle = await getOpenBattleById(battleId);
@@ -75,7 +74,6 @@ export const updateBattleResult = async (
     }
 
     await existingResult.save();
-
     return existingResult;
   } catch (error) {
     throw new Error(error.message);
@@ -122,7 +120,6 @@ export const getAllBattleResults = async (filter) => {
           $replaceRoot: { newRoot: "$documents" },
         },
       ]);
-
       return result;
     } else {
       return await BattleResult.find();
