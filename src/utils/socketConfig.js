@@ -1,5 +1,4 @@
 import { Server } from "socket.io";
-import PlayRequest from "../models/temp/playRequest.modal.js";
 import { getUserById } from "../services/user.service.js";
 import roomHandler from "../socket/roomHandler.js";
 
@@ -25,21 +24,13 @@ const initSocket = (server) => {
 
       const { userId, createdBy, status } = data;
 
-      const tempData = new PlayRequest(data);
-      await tempData.save();
-
-      const reqData = await PlayRequest.findOne({ userId });
-      console.log("<><><><><><><><><><><>", reqData);
-
-      if (reqData) {
-        if (users[createdBy]?.socketId) {
-          if (createdBy !== userId) {
-            io.to(users[createdBy]?.socketId).emit("play-request", {
-              message: "You received a play request!",
-              status,
-              requestedFrom: userId,
-            });
-          }
+      if (users[createdBy]?.socketId) {
+        if (createdBy !== userId) {
+          io.to(users[createdBy]?.socketId).emit("play-request", {
+            message: "You received a play request!",
+            status,
+            requestedFrom: userId,
+          });
         }
       }
     });
