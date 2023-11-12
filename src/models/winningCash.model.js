@@ -8,6 +8,9 @@ const winningCashSchema = new mongoose.Schema(
   { versionKey: false, timestamps: true }
 );
 
+// Create a unique compound index on the user field
+winningCashSchema.index({ user: 1 }, { unique: true });
+
 const WinningCash = mongoose.model("WinningCash", winningCashSchema);
 
 export default WinningCash;
