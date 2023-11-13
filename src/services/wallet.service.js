@@ -27,18 +27,18 @@ export const getWalletByUserId = async (userId) => {
   }
 };
 
-export const deductFromWallet = async (userId, amountToDeduct) => {
+export const updateWallet = async (userId, amount) => {
   const wallet = await Wallet.findOne({ user: userId });
 
   if (!wallet) {
     throw new Error("Wallet not found");
   }
 
-  if (wallet.balance < amountToDeduct) {
+  if (wallet.balance < amount) {
     throw new Error("Insufficient funds in the wallet");
   }
 
-  wallet.balance -= amountToDeduct;
+  wallet.balance += amount;
   await wallet.save();
 
   return wallet;

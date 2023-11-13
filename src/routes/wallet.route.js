@@ -1,7 +1,7 @@
 import express from "express";
 import {
   createWalletForUser,
-  deductFromWalletController,
+  updateWalletController,
   getWallet,
 } from "../controllers/wallet.controller.js";
 import { verifyToken } from "../middleware/VerifyToken.js";
@@ -15,6 +15,6 @@ router.post("/:userId/create", verifyToken, createWalletForUser);
 router.get("/:userId", verifyToken, getWallet);
 
 // update wallet balance
-router.put("/update", verifyToken, deductFromWalletController);
+router.put("/update", verifyToken, updateWalletController);
 
 export default router;

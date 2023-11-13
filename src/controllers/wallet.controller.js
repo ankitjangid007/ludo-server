@@ -1,6 +1,6 @@
 import {
   createWallet,
-  deductFromWallet,
+  updateWallet,
   getWalletByUserId,
 } from "../services/wallet.service.js";
 
@@ -30,11 +30,11 @@ export const getWallet = async (req, res) => {
 };
 
 // Controller to deduct balance from a user's wallet
-export const deductFromWalletController = async (req, res) => {
+export const updateWalletController = async (req, res) => {
   const { userId, amount } = req.body;
 
   try {
-    const wallet = await deductFromWallet(userId, amount);
+    const wallet = await updateWallet(userId, amount);
     res.status(200).json(wallet);
   } catch (error) {
     res.status(500).json({ error: error.message });
