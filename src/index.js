@@ -73,84 +73,84 @@ app.use("/withdrawal", withdrawalRoutes);
 //   }
 // });
 
-const razorpayInstance = new Razorpay({
-  key_id: process.env.PAYMENT_GATEWAY_API_KEY,
-  key_secret: process.env.PAYMENT_GATEWAY_KEY_SECRET,
-});
+// const razorpayInstance = new Razorpay({
+//   key_id: process.env.PAYMENT_GATEWAY_API_KEY,
+//   key_secret: process.env.PAYMENT_GATEWAY_KEY_SECRET,
+// });
 
-app.post("/razorpay", async (req, res) => {
-  const { amount } = req.body;
+// app.post("/razorpay", async (req, res) => {
+//   const { amount } = req.body;
 
-  const payment_capture = 1;
-  const currency = "INR";
+//   const payment_capture = 1;
+//   const currency = "INR";
 
-  const options = {
-    amount: amount * 100,
-    currency,
-    receipt: shortid.generate(),
-    payment_capture,
-  };
+//   const options = {
+//     amount: amount * 100,
+//     currency,
+//     receipt: shortid.generate(),
+//     payment_capture,
+//   };
 
-  try {
-    const response = await razorpayInstance.orders.create(options);
-    logger.info(response);
-    res.json({
-      id: response.id,
-      currency: response.currency,
-      amount: response.amount,
-      receipt: response.receipt,
-      currency: response.currency,
-      status: response.status,
-    });
-  } catch (error) {
-    console.log(error);
-  }
-});
+//   try {
+//     const response = await razorpayInstance.orders.create(options);
+//     logger.info(response);
+//     res.json({
+//       id: response.id,
+//       currency: response.currency,
+//       amount: response.amount,
+//       receipt: response.receipt,
+//       currency: response.currency,
+//       status: response.status,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//   }
+// });
 
-app.post("/withdraw-cash", async (req, res) => {
-  const { bankAccount, amount, bankName, IFSC, accountHolderName } = req.body;
+// app.post("/withdraw-cash", async (req, res) => {
+//   const { bankAccount, amount, bankName, IFSC, accountHolderName } = req.body;
 
-  // const payout = {
-  //   account_number: "7878780080316316",
-  //   fund_account_id: "Mq3fhM5mmebXB2",
-  //   amount: 1000000,
-  //   currency: "INR",
-  //   mode: "IMPS",
-  //   purpose: "refund",
-  //   queue_if_low_balance: true,
-  //   reference_id: "Acme Transaction ID 12345",
-  //   narration: "Acme Corp Fund Transfer",
-  //   notes: {
-  //     notes_key_1: "Tea, Earl Grey, Hot",
-  //     notes_key_2: "Tea, Earl Grey… decaf.",
-  //   },
-  // };
+//   // const payout = {
+//   //   account_number: "7878780080316316",
+//   //   fund_account_id: "Mq3fhM5mmebXB2",
+//   //   amount: 1000000,
+//   //   currency: "INR",
+//   //   mode: "IMPS",
+//   //   purpose: "refund",
+//   //   queue_if_low_balance: true,
+//   //   reference_id: "Acme Transaction ID 12345",
+//   //   narration: "Acme Corp Fund Transfer",
+//   //   notes: {
+//   //     notes_key_1: "Tea, Earl Grey, Hot",
+//   //     notes_key_2: "Tea, Earl Grey… decaf.",
+//   //   },
+//   // };
 
-  const options = {
-    source_account_id: "YOUR_BUSINESS_ACCOUNT_ID",
-    recipient_account_id: "RECIPIENT_ACCOUNT_ID",
-    method: "bank_transfer",
-    amount: 1000, // 10 INR in paise
-    currency: "INR",
-    notes: { reason: "Payout for services" },
-    entity_type: "bank_account",
-    queue_if_low_balance: false,
-    tax: {
-      rate: 18,
-      amount: 180,
-    },
-  };
+//   const options = {
+//     source_account_id: "YOUR_BUSINESS_ACCOUNT_ID",
+//     recipient_account_id: "RECIPIENT_ACCOUNT_ID",
+//     method: "bank_transfer",
+//     amount: 1000, // 10 INR in paise
+//     currency: "INR",
+//     notes: { reason: "Payout for services" },
+//     entity_type: "bank_account",
+//     queue_if_low_balance: false,
+//     tax: {
+//       rate: 18,
+//       amount: 180,
+//     },
+//   };
 
-  try {
-    const payoutResponse = await razorpayInstance.payouts.create(options);
-    logger.info(payoutResponse);
+//   try {
+//     const payoutResponse = await razorpayInstance.payouts.create(options);
+//     logger.info(payoutResponse);
 
-    res.json({ message: "Payout successful", payoutResponse });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Payout failed" });
-  }
-});
+//     res.json({ message: "Payout successful", payoutResponse });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Payout failed" });
+//   }
+// });
 
 const server = http.createServer(app);
 
