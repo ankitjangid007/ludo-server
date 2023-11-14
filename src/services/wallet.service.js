@@ -34,9 +34,9 @@ export const updateWallet = async (userId, amount) => {
     throw new Error("Wallet not found");
   }
 
-  if (wallet.balance < amount) {
-    throw new Error("Insufficient funds in the wallet");
-  }
+  // if (wallet.balance < amount) {
+  //   throw new Error("Insufficient funds in the wallet");
+  // }
 
   wallet.balance += amount;
   await wallet.save();

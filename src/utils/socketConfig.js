@@ -68,6 +68,15 @@ const initSocket = (server) => {
       });
     });
 
+    socket.on("payment-status", (data) => {
+      console.log("data>>>", data);
+      const { userId, requestId } = data;
+      io.to(users[userId]?.socketId).emit("fetch-payment-status", {
+        status: true,
+        message: "Wallet has been updated.",
+      });
+    });
+
     roomHandler(socket);
 
     socket.on("disconnect", () => {
