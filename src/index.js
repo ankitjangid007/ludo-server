@@ -19,6 +19,7 @@ import transactionRoutes from "./routes/transaction.route.js";
 import battleResultRoutes from "./routes/battleResult.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import withdrawalRoutes from "./routes/withdrawal.route.js";
+import tempRoutes from "./routes/temp/temp.route.js";
 
 import BattleResult from "./models/battleResult.model.js";
 
@@ -39,6 +40,7 @@ app.use("/open-battles", openBattleRoutes);
 app.use("/results", battleResultRoutes);
 app.use("/payment", paymentRoutes);
 app.use("/withdrawal", withdrawalRoutes);
+app.use("/temp", tempRoutes);
 
 // app.get("/winner", async (req, res) => {
 //   try {

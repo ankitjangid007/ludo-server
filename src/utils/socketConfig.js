@@ -1,4 +1,6 @@
 import { Server } from "socket.io";
+import PlayRequest from "../models/temp/playRequest.model.js";
+import { playRequestService } from "../services/temp/playRequest.service.js";
 import { getUserById } from "../services/user.service.js";
 import roomHandler from "../socket/roomHandler.js";
 
@@ -21,8 +23,10 @@ const initSocket = (server) => {
 
     socket.on("send-play-request", async (data) => {
       // console.log("send-play-request", data);
+      await playRequestService(data);
+      const { userId, battleId, createdBy, status } = data;
 
-      const { userId, createdBy, status } = data;
+      const res = await PlayRequest.findOne({ userId });
 
       if (users[createdBy]?.socketId) {
         if (createdBy !== userId) {
@@ -32,6 +36,15 @@ const initSocket = (server) => {
             requestedFrom: userId,
           });
         }
+      }
+    });
+
+    socket.on("cancel-play-request", async (data) => {
+      const { createdBy } = data;
+      if (users[createdBy]?.socketId) {
+        io.to(users[createdBy]?.socketId).emit("receive-cancel-play-request", {
+          message: "play request cancelled",
+        });
       }
     });
 
