@@ -8,7 +8,7 @@ const battleResultSchema = new mongoose.Schema(
       ref: "OpenBattle",
       required: true,
     },
-    roomCode: { type: String, required: true },
+    roomCode: { type: String },
     battleResult: {
       type: String,
       enum: ["I won", "I lost", "Cancel"],

@@ -9,7 +9,9 @@ export const createBattleResult = async (req, res) => {
   const { userId, battleId, roomCode, battleResult, file, cancellationReason } =
     req.body;
 
-  if (!userId || !battleId || !roomCode || !battleResult) {
+  console.log("data>>>>>", req.body);
+
+  if (!userId || !battleId || !battleResult) {
     return res.status(400).json({ message: "Missing required data" });
   }
 

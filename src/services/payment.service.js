@@ -33,6 +33,8 @@ export const updatePayment = async (paymentId, paymentData) => {
     if (!record) {
       throw new Error("Couldn't find payment record");
     }
+
+    console.log("status>>>>", paymentData.status);
     record.status = paymentData.status;
 
     if (paymentData.status === "complete") {
