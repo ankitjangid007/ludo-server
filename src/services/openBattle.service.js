@@ -1,3 +1,4 @@
+import mongoose, { Types } from "mongoose";
 import OpenBattle from "../models/openBattle.model.js";
 
 // Service to create an open battle
@@ -31,9 +32,55 @@ export const getOpenBattles = async () => {
 
 // Service to get open battle by ID
 export const getOpenBattleById = async (openBattleId) => {
+  const id = new Types.ObjectId(openBattleId)
+
   try {
-    const openBattle = await OpenBattle.findById(openBattleId);
-    return openBattle;
+    const openBattle = await OpenBattle.aggregate([
+      {
+        $match: {
+          _id: id
+        }
+      }, {
+        '$lookup': {
+          'from': 'users',
+          'localField': 'userId',
+          'foreignField': '_id',
+          'as': 'userDetail',
+          'pipeline': [
+            {
+              '$project': {
+                'userName': 1,
+                '_id': 1
+              }
+            }
+          ]
+        }
+      }, {
+        '$lookup': {
+          'from': 'users',
+          'localField': 'participant',
+          'foreignField': '_id',
+          'as': 'participantDetail',
+          'pipeline': [
+            {
+              '$project': {
+                'userName': 1,
+                '_id': 1
+              }
+            }
+          ]
+        }
+      }, {
+        '$unwind': {
+          'path': '$userDetail'
+        }
+      }, {
+        '$unwind': {
+          'path': '$participantDetail'
+        }
+      }
+    ]);
+    return openBattle[0];
   } catch (error) {
     throw new Error("Could not retrieve open battle: " + error.message);
   }

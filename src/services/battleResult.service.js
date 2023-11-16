@@ -1,5 +1,6 @@
 import BattleResult from "../models/battleResult.model.js";
 import WinningCash from "../models/winningCash.model.js";
+import { resultFilter } from "../utils/resultFilter.js";
 import { getOpenBattleById } from "./openBattle.service.js";
 
 export const battleResultService = async (
@@ -90,38 +91,55 @@ export const getAllBattleResults = async (filter) => {
     } else if (filter === "cancelled") {
       return await BattleResult.find({ battleResult: "Cancel" });
     } else if (filter === "issued") {
+
       const result = await BattleResult.aggregate([
         {
-          $group: {
-            _id: { battleId: "$battleId", roomcode: "$roomcode" },
-            documents: { $push: "$$ROOT" },
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            documents: {
-              $filter: {
-                input: "$documents",
-                as: "doc",
-                cond: { $eq: ["$$doc.battleResult", "I won"] },
-              },
+          '$group': {
+            '_id': {
+              'battleId': '$battleId',
+              'roomCode': '$roomCode'
             },
-          },
-        },
-        {
-          $match: {
-            $expr: { $eq: [{ $size: "$documents" }, 2] },
-          },
-        },
-        {
-          $unwind: "$documents",
-        },
-        {
-          $replaceRoot: { newRoot: "$documents" },
-        },
-      ]);
-      return result;
+            'documents': {
+              '$push': '$$ROOT'
+            }
+          }
+        }, {
+          '$unwind': {
+            'path': '$documents'
+          }
+        }, {
+          '$lookup': {
+            'from': 'users',
+            'localField': 'documents.userId',
+            'foreignField': '_id',
+            'as': 'user'
+          }
+        }, {
+          '$group': {
+            '_id': '$_id',
+            'documents': {
+              '$push': {
+                '$mergeObjects': [
+                  '$documents', {
+                    'user': {
+                      '$arrayElemAt': [
+                        '$user', 0
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ])
+
+
+
+      const finalResult = await resultFilter(result)
+
+      // Filter the result 
+      return finalResult;
     } else {
       return await BattleResult.find();
     }
