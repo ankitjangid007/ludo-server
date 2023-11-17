@@ -23,7 +23,15 @@ export const createOpenBattle = async (openBattleData) => {
   }
 };
 
-// export const getOpenBattles = async (status, pageNumber, limit) => {
+export const getOpenBattles = async () => {
+  try {
+    return await OpenBattle.find();
+  } catch (error) {
+    throw new Error("Could not get all open battles");
+  }
+};
+
+// export const getBattlesByStatus = async (status, pageNumber, limit) => {
 //   try {
 //     let skip = limit * (pageNumber - 1);
 //     // return await OpenBattle.find({ status }, skip, limit);
@@ -34,7 +42,7 @@ export const createOpenBattle = async (openBattleData) => {
 //   }
 // };
 
-export const getOpenBattles = async (status, pageNumber, limit) => {
+export const getBattlesByStatus = async (status, pageNumber, limit) => {
   try {
     let skip = limit * (pageNumber - 1);
     const openBattles = await OpenBattle.find({ status });
@@ -53,7 +61,7 @@ export const getOpenBattles = async (status, pageNumber, limit) => {
     return openBattlesWithUserDetails;
   } catch (error) {
     console.log(error.message);
-    throw new Error("Could not get all open battles");
+    throw new Error("Failed get all battles");
   }
 };
 

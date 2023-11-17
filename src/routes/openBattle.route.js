@@ -6,6 +6,7 @@ import {
   getOpenBattleByIdController,
   addParticipantController,
   updateRoomCodeController,
+  getAllBattleByStatusController,
 } from "../controllers/openBattle.controller.js";
 import { verifyToken } from "../middleware/VerifyToken.js";
 
@@ -16,6 +17,8 @@ router.post("/", verifyToken, createOpenBattleController);
 
 // get all open battles
 router.get("/", verifyToken, getAllOpenBattle);
+
+router.get("/allBattle", verifyToken, getAllBattleByStatusController);
 
 // Get an open battle by ID
 router.get("/:openBattleId", verifyToken, getOpenBattleByIdController);

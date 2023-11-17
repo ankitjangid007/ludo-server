@@ -6,6 +6,7 @@ import {
   getOpenBattles,
   addBattleParticipant,
   updateRoomCode,
+  getBattlesByStatus,
 } from "../services/openBattle.service.js";
 import { getUserById } from "../services/user.service.js";
 import { io } from "../utils/socketConfig.js";
@@ -40,8 +41,7 @@ export const createOpenBattleController = async (req, res) => {
   }
 };
 
-// Controller to get all open battle
-export const getAllOpenBattle = async (req, res) => {
+export const getAllBattleByStatusController = async (req, res) => {
   try {
     const battleStatus = req.query.battleStatus
       ? req.query.battleStatus
@@ -49,7 +49,24 @@ export const getAllOpenBattle = async (req, res) => {
     const pageNumber = req.query.skip ? Number(req.query.pageNumber) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 
-    const openBattles = await getOpenBattles(battleStatus, pageNumber, limit);
+    const openBattles = await getBattlesByStatus(
+      battleStatus,
+      pageNumber,
+      limit
+    );
+
+    res.status(200).json(openBattles);
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+};
+
+// Controller to get all open bettle
+export const getAllOpenBattle = async (req, res) => {
+  try {
+    const openBattles = await getOpenBattles();
 
     const responseArray = await Promise.all(
       openBattles.map(async (openBattle) => {
