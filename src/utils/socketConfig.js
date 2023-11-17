@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import PlayRequest from "../models/temp/playRequest.model.js";
+import { acceptRequestService } from "../services/temp/acceptRequest.service.js";
 import { playRequestService } from "../services/temp/playRequest.service.js";
 import { getUserById } from "../services/user.service.js";
 import roomHandler from "../socket/roomHandler.js";
@@ -49,27 +50,36 @@ const initSocket = (server) => {
     });
 
     socket.on("add-participant-request", async (data) => {
-      const {
+      console.log("<><><><>", data);
+      const { battleId, requestedFrom, status, createdBy } = data;
+
+      await acceptRequestService({
         battleId,
         requestedFrom,
         status,
         createdBy,
-        createrUsername,
-        prize,
-      } = data;
-
-      const requestedUsername = await getUserById(requestedFrom);
+      });
 
       io.to(users[requestedFrom]?.socketId).emit("participant-added", {
         message: "You have been added as a participant.",
         battleId,
         requestedFrom,
-        requestedUsername: requestedUsername?.userName,
         status,
         createdBy,
-        createrUsername,
-        prize,
       });
+    });
+
+    socket.on("cancel-accept-request", async (data) => {
+      console.log("<><>>", data);
+      const { requestedFrom } = data;
+      if (users[requestedFrom]?.socketId) {
+        io.to(users[requestedFrom]?.socketId).emit(
+          "receive-cancel-accept-request",
+          {
+            message: "accept request cancelled",
+          }
+        );
+      }
     });
 
     socket.on("submit-room-code", (data) => {

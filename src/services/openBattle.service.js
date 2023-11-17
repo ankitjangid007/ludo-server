@@ -133,7 +133,7 @@ export const addBattleParticipant = async (openBattleId, userId) => {
       throw new Error("Open battle not found");
     }
     openBattle.participant = userId;
-    openBattle.status = "Running";
+    // openBattle.status = "Running";
     // openBattle.participant.push(userId);
     const updatedOpenBattle = await openBattle.save();
     return updatedOpenBattle;
@@ -150,6 +150,7 @@ export const updateRoomCode = async (openBattleId, roomCode) => {
       throw new Error("Open battle not found");
     }
     openBattle.roomCode = roomCode;
+    openBattle.status = "Running";
     const updatedOpenBattle = await openBattle.save();
     return updatedOpenBattle;
   } catch (error) {
