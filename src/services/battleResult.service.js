@@ -29,18 +29,29 @@ export const battleResultService = async (
     const battleRecords = await BattleResult.find({ battleId, roomCode });
 
     // Check if both users cancel the battle then update their wallet with respective battle price
-    if (battleRecords.length === 2 && battleRecords[0].battleResult === 'Cancel' && battleRecords[1].battleResult === 'Cancel') {
-      console.log(">>>>>>>>>>>>>>>>>>>>I am working")
+    if (
+      battleRecords.length === 2 &&
+      battleRecords[0].battleResult === "Cancel" &&
+      battleRecords[1].battleResult === "Cancel"
+    ) {
+      console.log(">>>>>>>>>>>>>>>>>>>>I am working");
       const battleInfo = await OpenBattle.findById({ _id: battleId });
-      // Update the wallet of both the participants and change the battle status to finished 
-      await Promise.all(
-      [Wallet.findOneAndUpdate({ user: battleRecords[0].userId }, { $inc: { balance: battleInfo.entryFee } }), 
-      Wallet.findOneAndUpdate({ user: battleRecords[1].userId }, { $inc: { balance: battleInfo.entryFee } }), 
-      OpenBattle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Finished" } })]
-      )
+      // Update the wallet of both the participants and change the battle status to finished
+      await Promise.all([
+        Wallet.findOneAndUpdate(
+          { user: battleRecords[0].userId },
+          { $inc: { balance: battleInfo.entryFee } }
+        ),
+        Wallet.findOneAndUpdate(
+          { user: battleRecords[1].userId },
+          { $inc: { balance: battleInfo.entryFee } }
+        ),
+        OpenBattle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Finished" } }
+        ),
+      ]);
     }
-
-
 
     const wonRecord = battleRecords.find(
       (record) => record.battleResult === "I won"
@@ -108,54 +119,53 @@ export const getAllBattleResults = async (filter) => {
     } else if (filter === "cancelled") {
       return await BattleResult.find({ battleResult: "Cancel" });
     } else if (filter === "issued") {
-
       const result = await BattleResult.aggregate([
         {
-          '$group': {
-            '_id': {
-              'battleId': '$battleId',
-              'roomCode': '$roomCode'
+          $group: {
+            _id: {
+              battleId: "$battleId",
+              roomCode: "$roomCode",
             },
-            'documents': {
-              '$push': '$$ROOT'
-            }
-          }
-        }, {
-          '$unwind': {
-            'path': '$documents'
-          }
-        }, {
-          '$lookup': {
-            'from': 'users',
-            'localField': 'documents.userId',
-            'foreignField': '_id',
-            'as': 'user'
-          }
-        }, {
-          '$group': {
-            '_id': '$_id',
-            'documents': {
-              '$push': {
-                '$mergeObjects': [
-                  '$documents', {
-                    'user': {
-                      '$arrayElemAt': [
-                        '$user', 0
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      ])
+            documents: {
+              $push: "$$ROOT",
+            },
+          },
+        },
+        {
+          $unwind: {
+            path: "$documents",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "documents.userId",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $group: {
+            _id: "$_id",
+            documents: {
+              $push: {
+                $mergeObjects: [
+                  "$documents",
+                  {
+                    user: {
+                      $arrayElemAt: ["$user", 0],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ]);
 
+      const finalResult = await resultFilter(result);
 
-
-      const finalResult = await resultFilter(result)
-
-      // Filter the result 
+      // Filter the result
       return finalResult;
     } else {
       return await BattleResult.find();

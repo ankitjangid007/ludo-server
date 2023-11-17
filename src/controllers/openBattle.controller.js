@@ -43,7 +43,9 @@ export const createOpenBattleController = async (req, res) => {
 // Controller to get all open battle
 export const getAllOpenBattle = async (req, res) => {
   try {
-    const battleStatus = req.query.battleStatus ? req.query.battleStatus : "Open";
+    const battleStatus = req.query.battleStatus
+      ? req.query.battleStatus
+      : "Open";
     const pageNumber = req.query.skip ? Number(req.query.pageNumber) : 0;
     const limit = req.query.limit ? Number(req.query.limit) : 10;
 

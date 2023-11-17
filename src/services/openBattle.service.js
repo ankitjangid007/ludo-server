@@ -1,5 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import OpenBattle from "../models/openBattle.model.js";
+import { getUserById } from "./user.service.js";
 
 // Service to create an open battle
 export const createOpenBattle = async (openBattleData) => {
@@ -22,64 +23,93 @@ export const createOpenBattle = async (openBattleData) => {
   }
 };
 
+// export const getOpenBattles = async (status, pageNumber, limit) => {
+//   try {
+//     let skip = limit * (pageNumber - 1);
+//     // return await OpenBattle.find({ status }, skip, limit);
+//     return await OpenBattle.find({ status });
+//   } catch (error) {
+//     console.log(error.message);
+//     throw new Error("Could not get all open battles");
+//   }
+// };
+
 export const getOpenBattles = async (status, pageNumber, limit) => {
   try {
-    skip = limit * (pageNumber - 1)
-    return await OpenBattle.find({ status }, skip, limit);
+    let skip = limit * (pageNumber - 1);
+    const openBattles = await OpenBattle.find({ status });
+
+    const openBattlesWithUserDetails = await Promise.all(
+      openBattles.map(async (battle) => {
+        const userDetail = await getUserById(battle.userId);
+        let participantDetail;
+        if (battle.participant) {
+          participantDetail = await getUserById(battle?.participant);
+        }
+        return { ...battle.toObject(), userDetail, participantDetail };
+      })
+    );
+
+    return openBattlesWithUserDetails;
   } catch (error) {
+    console.log(error.message);
     throw new Error("Could not get all open battles");
   }
 };
 
 // Service to get open battle by ID
 export const getOpenBattleById = async (openBattleId) => {
-  const id = new Types.ObjectId(openBattleId)
+  const id = new Types.ObjectId(openBattleId);
 
   try {
     const openBattle = await OpenBattle.aggregate([
       {
         $match: {
-          _id: id
-        }
-      }, {
-        '$lookup': {
-          'from': 'users',
-          'localField': 'userId',
-          'foreignField': '_id',
-          'as': 'userDetail',
-          'pipeline': [
+          _id: id,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userDetail",
+          pipeline: [
             {
-              '$project': {
-                'userName': 1,
-                '_id': 1
-              }
-            }
-          ]
-        }
-      }, {
-        '$lookup': {
-          'from': 'users',
-          'localField': 'participant',
-          'foreignField': '_id',
-          'as': 'participantDetail',
-          'pipeline': [
+              $project: {
+                userName: 1,
+                _id: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "participant",
+          foreignField: "_id",
+          as: "participantDetail",
+          pipeline: [
             {
-              '$project': {
-                'userName': 1,
-                '_id': 1
-              }
-            }
-          ]
-        }
-      }, {
-        '$unwind': {
-          'path': '$userDetail'
-        }
-      }, {
-        '$unwind': {
-          'path': '$participantDetail'
-        }
-      }
+              $project: {
+                userName: 1,
+                _id: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $unwind: {
+          path: "$userDetail",
+        },
+      },
+      {
+        $unwind: {
+          path: "$participantDetail",
+        },
+      },
     ]);
     return openBattle[0];
   } catch (error) {
