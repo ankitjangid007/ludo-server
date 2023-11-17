@@ -1,4 +1,6 @@
 import BattleResult from "../models/battleResult.model.js";
+import OpenBattle from "../models/openBattle.model.js";
+import Wallet from "../models/wallet.model.js";
 import WinningCash from "../models/winningCash.model.js";
 import { resultFilter } from "../utils/resultFilter.js";
 import { getOpenBattleById } from "./openBattle.service.js";
@@ -25,6 +27,21 @@ export const battleResultService = async (
     const savedResult = await newResult.save();
 
     const battleRecords = await BattleResult.find({ battleId, roomCode });
+
+    // Check if both users cancel the battle then update their wallet with respective battle price
+    if (battleRecords.length === 2 && battleRecords[0].battleResult === 'Cancel' && battleRecords[1].battleResult === 'Cancel') {
+      console.log(">>>>>>>>>>>>>>>>>>>>I am working")
+      const battleInfo = await OpenBattle.findById({ _id: battleId });
+      // Update the wallet of both the participants and change the battle status to finished 
+      await Promise.all(
+      [Wallet.findOneAndUpdate({ user: battleRecords[0].userId }, { $inc: { balance: battleInfo.entryFee } }), 
+      Wallet.findOneAndUpdate({ user: battleRecords[1].userId }, { $inc: { balance: battleInfo.entryFee } }), 
+      OpenBattle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Finished" } })]
+      )
+    }
+
+
+
     const wonRecord = battleRecords.find(
       (record) => record.battleResult === "I won"
     );
