@@ -40,10 +40,14 @@ export const createOpenBattleController = async (req, res) => {
   }
 };
 
-// Controller to get all open bettle
+// Controller to get all open battle
 export const getAllOpenBattle = async (req, res) => {
   try {
-    const openBattles = await getOpenBattles();
+    const battleStatus = req.query.battleStatus ? req.query.battleStatus : "Open";
+    const pageNumber = req.query.skip ? Number(req.query.pageNumber) : 0;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+
+    const openBattles = await getOpenBattles(battleStatus, pageNumber, limit);
 
     const responseArray = await Promise.all(
       openBattles.map(async (openBattle) => {

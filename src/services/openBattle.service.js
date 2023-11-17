@@ -22,9 +22,10 @@ export const createOpenBattle = async (openBattleData) => {
   }
 };
 
-export const getOpenBattles = async () => {
+export const getOpenBattles = async (status, pageNumber, limit) => {
   try {
-    return await OpenBattle.find();
+    skip = limit * (pageNumber - 1)
+    return await OpenBattle.find({ status }, skip, limit);
   } catch (error) {
     throw new Error("Could not get all open battles");
   }
