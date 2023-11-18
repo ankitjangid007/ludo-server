@@ -6,8 +6,7 @@ import dotenv from "dotenv";
 import { initSocket } from "./utils/socketConfig.js";
 import logger from "./utils/logger.js";
 import { connectDatabase } from "./utils/database.js";
-import Razorpay from "razorpay";
-import shortid from "shortid";
+
 
 // import routes
 import authRoutes from "./routes/auth.route.js";
@@ -20,8 +19,7 @@ import battleResultRoutes from "./routes/battleResult.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import withdrawalRoutes from "./routes/withdrawal.route.js";
 import tempRoutes from "./routes/temp/temp.route.js";
-
-import BattleResult from "./models/battleResult.model.js";
+import activities from "./routes/activity.route.js"
 
 dotenv.config();
 const app = express();
@@ -41,6 +39,7 @@ app.use("/results", battleResultRoutes);
 app.use("/payment", paymentRoutes);
 app.use("/withdrawal", withdrawalRoutes);
 app.use("/temp", tempRoutes);
+app.use("/activities", activities)
 
 // app.get("/winner", async (req, res) => {
 //   try {

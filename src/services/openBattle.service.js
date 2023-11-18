@@ -1,6 +1,8 @@
 import mongoose, { Types } from "mongoose";
 import OpenBattle from "../models/openBattle.model.js";
 import { getUserById } from "./user.service.js";
+import { activityTags } from "../constants/activityTags.js";
+import UserActivity from "../models/userActivity.model.js";
 
 // Service to create an open battle
 export const createOpenBattle = async (openBattleData) => {
@@ -17,6 +19,7 @@ export const createOpenBattle = async (openBattleData) => {
 
     // Save the new open battle
     const openBattle = await newOpenBattle.save();
+  
     return openBattle;
   } catch (error) {
     throw new Error("Could not create open battle: " + error.message);
@@ -31,16 +34,6 @@ export const getOpenBattles = async () => {
   }
 };
 
-// export const getBattlesByStatus = async (status, pageNumber, limit) => {
-//   try {
-//     let skip = limit * (pageNumber - 1);
-//     // return await OpenBattle.find({ status }, skip, limit);
-//     return await OpenBattle.find({ status });
-//   } catch (error) {
-//     console.log(error.message);
-//     throw new Error("Could not get all open battles");
-//   }
-// };
 
 export const getBattlesByStatus = async (status, pageNumber, limit) => {
   try {
@@ -133,9 +126,8 @@ export const addBattleParticipant = async (openBattleId, userId) => {
       throw new Error("Open battle not found");
     }
     openBattle.participant = userId;
-    // openBattle.status = "Running";
-    // openBattle.participant.push(userId);
     const updatedOpenBattle = await openBattle.save();
+   
     return updatedOpenBattle;
   } catch (error) {
     throw new Error("Could not join open battle: " + error.message);
@@ -152,6 +144,7 @@ export const updateRoomCode = async (openBattleId, roomCode) => {
     openBattle.roomCode = roomCode;
     openBattle.status = "Running";
     const updatedOpenBattle = await openBattle.save();
+   
     return updatedOpenBattle;
   } catch (error) {
     throw new Error("Could not update room code: " + error.message);
@@ -161,7 +154,9 @@ export const updateRoomCode = async (openBattleId, roomCode) => {
 //  delete openBattle
 export const deleteOpenBattle = async (battleId) => {
   try {
-    return await OpenBattle.findByIdAndDelete(battleId);
+
+    const result = await OpenBattle.findByIdAndDelete(battleId);
+    return result
   } catch (error) {
     throw new Error("Could not delete battle");
   }

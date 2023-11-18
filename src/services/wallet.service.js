@@ -8,10 +8,11 @@ export const createWallet = async (userId) => {
     if (!existingWallet) {
       const newWallet = new Wallet({ user: userId });
       await newWallet.save();
-      return newWallet;
+      return { wallet: newWallet, isNew: true }
+
     }
 
-    return existingWallet;
+    return { wallet: existingWallet, isNew: false };
   } catch (error) {
     throw new Error("Could not create wallet: " + error.message);
   }

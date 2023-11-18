@@ -1,3 +1,5 @@
+import { activityTags } from "../constants/activityTags.js";
+import UserActivity from "../models/userActivity.model.js";
 import {
   createWinCashWallet,
   deductFromWinningCashWallet,
@@ -8,8 +10,10 @@ import {
 export const createWinningCashWallet = async (req, res) => {
   try {
     const userId = req.params.userId;
-    console.log("11111111111");
+
     const wallet = await createWinCashWallet(userId);
+    // Activity log 
+    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.WINING_CASH_WALLET_CREATED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     return res.status(201).json(wallet);
   } catch (error) {
     return res.status(400).json({ error: error.message });
@@ -30,12 +34,14 @@ export const getWinningCashWallet = async (req, res) => {
   }
 };
 
-// // Controller to deduct balance from a user's wallet
+// Controller to deduct balance from a user's wallet
 export const deductFromWinningCashWalletController = async (req, res) => {
   const { userId, amount } = req.body;
 
   try {
     const wallet = await deductFromWinningCashWallet(userId, amount);
+    // Activity log 
+    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.WINING_CASH_WALLET_UPDATED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     res.status(200).json(wallet);
   } catch (error) {
     res.status(500).json({ error: error.message });

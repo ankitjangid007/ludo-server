@@ -15,7 +15,7 @@ const battleResultSchema = new mongoose.Schema(
       required: true,
     },
     file: {
-      type: String,
+      type: Buffer,
       required: function () {
         return this.battleResult === "I won";
       },

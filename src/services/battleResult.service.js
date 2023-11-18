@@ -1,5 +1,7 @@
+import { activityTags } from "../constants/activityTags.js";
 import BattleResult from "../models/battleResult.model.js";
 import OpenBattle from "../models/openBattle.model.js";
+import UserActivity from "../models/userActivity.model.js";
 import Wallet from "../models/wallet.model.js";
 import WinningCash from "../models/winningCash.model.js";
 import { resultFilter } from "../utils/resultFilter.js";
@@ -34,7 +36,7 @@ export const battleResultService = async (
       battleRecords[0].battleResult === "Cancel" &&
       battleRecords[1].battleResult === "Cancel"
     ) {
-      console.log(">>>>>>>>>>>>>>>>>>>>I am working");
+
       const battleInfo = await OpenBattle.findById({ _id: battleId });
       // Update the wallet of both the participants and change the battle status to finished
       await Promise.all([
@@ -63,10 +65,16 @@ export const battleResultService = async (
     if (wonRecord && lostRecord) {
       const wallet = await WinningCash.findOne({ user: wonRecord.userId });
       const battle = await getOpenBattleById(wonRecord.battleId);
-
-      wallet.balance += battle.totalPrize;
+      OpenBattle.findByIdAndUpdate(
+        { _id: battleId },
+        { $set: { status: "Finished" } }
+      ),
+        wallet.balance += battle.totalPrize;
       await wallet.save();
     }
+
+    // Activity log 
+    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_RESULT_ADDED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
 
     return savedResult;
   } catch (error) {
@@ -104,6 +112,8 @@ export const updateBattleResult = async (
     }
 
     await existingResult.save();
+    // Activity log 
+    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_RESULT_UPDATED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     return existingResult;
   } catch (error) {
     throw new Error(error.message);

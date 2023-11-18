@@ -1,3 +1,5 @@
+import { activityTags } from "../constants/activityTags.js";
+import UserActivity from "../models/userActivity.model.js";
 import {
   createPayment,
   getPayment,
@@ -8,6 +10,8 @@ import {
 export const createPaymentController = async (req, res) => {
   try {
     const payment = await createPayment(req.body);
+    // Activity log 
+    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.PAYMENT_ADDED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     res.status(201).json(payment);
   } catch (error) {
     res.status(500).json({ error: "Unable to create payment" });
@@ -38,6 +42,8 @@ export const updatePaymentController = async (req, res) => {
     const { paymentId } = req.params;
     const paymentData = req.body;
     const data = await updatePayment(paymentId, paymentData);
+    // Activity log 
+    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.PAYMENT_UPDATED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: "Unable to update payment request" });

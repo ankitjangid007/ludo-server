@@ -12,6 +12,7 @@ export const verifyToken = (req, res, next) => {
       if (err) {
         throw new Error("Invalid token");
       }
+
       req.decoded = decoded;
       next();
     });

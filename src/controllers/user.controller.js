@@ -2,6 +2,9 @@ import User from "../models/user.model.js";
 import { StatusCodes } from "http-status-codes";
 import { generateToken } from "../utils/generateToken.js";
 import { getAllUsers } from "../services/user.service.js";
+import UserActivity from "../models/userActivity.model.js";
+import { Types } from "mongoose";
+import { activityTags } from "../constants/activityTags.js";
 
 // Controller to create a new user
 export const createUserOrLogin = async (req, res) => {
@@ -12,6 +15,8 @@ export const createUserOrLogin = async (req, res) => {
 
     if (existingUser) {
       const token = generateToken(existingUser);
+      // Activity log 
+      UserActivity.create({ userId: existingUser.id, activityTag: activityTags.LOGIN, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
       res.status(StatusCodes.OK).json({ token });
     } else {
       // Create a new user if the mobile number is not found in the database
@@ -20,6 +25,10 @@ export const createUserOrLogin = async (req, res) => {
 
       // Generate a token for the newly created user and send it to the client
       const token = generateToken(user);
+
+      // Activity log 
+      UserActivity.create({ userId: user.id, activityTag: activityTags.SIGNUP, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+
       res.cookie("userToken", token, { httpOnly: true });
       res.status(StatusCodes.CREATED).json({ token, role: "user" });
     }
@@ -45,7 +54,8 @@ export const getAllUsersController = async (req, res) => {
 // Controller to get user by ID
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const userId = new Types.ObjectId(req.decoded.userId)
+    const user = await User.findById({ _id: userId });
     if (user) {
       res.json(user);
     } else {
@@ -59,12 +69,16 @@ export const getUserById = async (req, res) => {
 // Controller to update user information
 export const updateUser = async (req, res) => {
   try {
+    const userId = new Types.ObjectId(req.decoded.userId);
     const updatedUser = await User.findByIdAndUpdate(
-      req.params.userId,
+      { _id: userId },
       req.body,
       { new: true }
     );
+
     if (updatedUser) {
+      // Activity log 
+      UserActivity.create({ userId: updatedUser.id, activityTag: activityTags.PROFILE_UPDATE, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
       res.json(updatedUser);
     } else {
       res.status(404).json({ error: "User not found" });
@@ -78,6 +92,8 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     await User.findByIdAndRemove(req.params.userId);
+    // Activity log 
+    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.DELETE_USER, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     res.status(204).end();
   } catch (error) {
     res.status(400).json({ error: error.message });
