@@ -1,8 +1,7 @@
 import mongoose, { Types } from "mongoose";
 import OpenBattle from "../models/openBattle.model.js";
 import { getUserById } from "./user.service.js";
-import { activityTags } from "../constants/activityTags.js";
-import UserActivity from "../models/userActivity.model.js";
+import Wallet from "../models/wallet.model.js";
 
 // Service to create an open battle
 export const createOpenBattle = async (openBattleData) => {
@@ -19,7 +18,7 @@ export const createOpenBattle = async (openBattleData) => {
 
     // Save the new open battle
     const openBattle = await newOpenBattle.save();
-  
+
     return openBattle;
   } catch (error) {
     throw new Error("Could not create open battle: " + error.message);
@@ -33,7 +32,6 @@ export const getOpenBattles = async () => {
     throw new Error("Could not get all open battles");
   }
 };
-
 
 export const getBattlesByStatus = async (status, pageNumber, limit) => {
   try {
@@ -125,9 +123,24 @@ export const addBattleParticipant = async (openBattleId, userId) => {
     if (!openBattle) {
       throw new Error("Open battle not found");
     }
+
+    const newUserWallet = Wallet.findOne(openBattle.userId);
+
+    if (newUserWallet) {
+      newUserWallet.balance -= openBattle.entryFee;
+      await newUserWallet.save();
+    }
+
+    const newPareticipantWallet = Wallet.findOne(userId);
+
+    if (newPareticipantWallet) {
+      newPareticipantWallet.balance -= openBattle.entryFee;
+      await newPareticipantWallet.save();
+    }
+
     openBattle.participant = userId;
     const updatedOpenBattle = await openBattle.save();
-   
+
     return updatedOpenBattle;
   } catch (error) {
     throw new Error("Could not join open battle: " + error.message);
@@ -144,7 +157,7 @@ export const updateRoomCode = async (openBattleId, roomCode) => {
     openBattle.roomCode = roomCode;
     openBattle.status = "Running";
     const updatedOpenBattle = await openBattle.save();
-   
+
     return updatedOpenBattle;
   } catch (error) {
     throw new Error("Could not update room code: " + error.message);
@@ -154,9 +167,8 @@ export const updateRoomCode = async (openBattleId, roomCode) => {
 //  delete openBattle
 export const deleteOpenBattle = async (battleId) => {
   try {
-
     const result = await OpenBattle.findByIdAndDelete(battleId);
-    return result
+    return result;
   } catch (error) {
     throw new Error("Could not delete battle");
   }
