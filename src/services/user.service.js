@@ -10,6 +10,18 @@ export const createUser = async (userData) => {
   }
 };
 
+export const getAllUsers = async () => {
+  try {
+    const users = await User.find();
+    if (!users) {
+      throw new Error("Could not find all users");
+    }
+    return users;
+  } catch (error) {
+    throw new Error("Could not retrieve user list: " + error.message);
+  }
+};
+
 export const getUserById = async (userId) => {
   try {
     const user = await User.findById(userId);

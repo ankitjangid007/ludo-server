@@ -5,6 +5,7 @@ import {
   getUserById,
   updateUser,
   deleteUser,
+  getAllUsersController,
 } from "../controllers/user.controller.js";
 import { verifyToken } from "../middleware/VerifyToken.js";
 
@@ -12,6 +13,9 @@ const router = express.Router();
 
 // Create a new user
 router.post("/", createUserOrLogin);
+
+// Get all users
+router.get("/", verifyToken, getAllUsersController);
 
 // Get user by ID
 router.get("/:userId", verifyToken, getUserById);

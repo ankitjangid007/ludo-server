@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import { StatusCodes } from "http-status-codes";
 import { generateToken } from "../utils/generateToken.js";
+import { getAllUsers } from "../services/user.service.js";
 
 // Controller to create a new user
 export const createUserOrLogin = async (req, res) => {
@@ -22,6 +23,18 @@ export const createUserOrLogin = async (req, res) => {
       res.cookie("userToken", token, { httpOnly: true });
       res.status(StatusCodes.CREATED).json({ token, role: "user" });
     }
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+};
+
+// Controller to get all users
+export const getAllUsersController = async (req, res) => {
+  try {
+    const users = await getAllUsers();
+    res.status(StatusCodes.OK).json(users);
   } catch (error) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
