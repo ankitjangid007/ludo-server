@@ -124,19 +124,20 @@ export const addBattleParticipant = async (openBattleId, userId) => {
       throw new Error("Open battle not found");
     }
 
-    const newUserWallet = Wallet.findOne(openBattle.userId);
+    const userWallet = await Wallet.findOne({ user: openBattle.userId });
+    if (!userWallet) {
+      throw new Error("Couldn't find user's wallet");
+    }
+    userWallet.balance -= openBattle.entryFee;
+    await userWallet.save();
 
-    if (newUserWallet) {
-      newUserWallet.balance -= openBattle.entryFee;
-      await newUserWallet.save();
+    const participantWallet = await Wallet.findOne({ user: userId });
+    if (!participantWallet) {
+      throw new Error("Couldn't find participant's wallet");
     }
 
-    const newPareticipantWallet = Wallet.findOne(userId);
-
-    if (newPareticipantWallet) {
-      newPareticipantWallet.balance -= openBattle.entryFee;
-      await newPareticipantWallet.save();
-    }
+    participantWallet.balance -= openBattle.entryFee;
+    await participantWallet.save();
 
     openBattle.participant = userId;
     const updatedOpenBattle = await openBattle.save();
