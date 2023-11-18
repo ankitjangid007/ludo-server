@@ -36,7 +36,6 @@ export const battleResultService = async (
       battleRecords[0].battleResult === "Cancel" &&
       battleRecords[1].battleResult === "Cancel"
     ) {
-
       const battleInfo = await OpenBattle.findById({ _id: battleId });
       // Update the wallet of both the participants and change the battle status to finished
       await Promise.all([
@@ -69,12 +68,9 @@ export const battleResultService = async (
         { _id: battleId },
         { $set: { status: "Finished" } }
       ),
-        wallet.balance += battle.totalPrize;
+        (wallet.balance += battle.totalPrize);
       await wallet.save();
     }
-
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_RESULT_ADDED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
 
     return savedResult;
   } catch (error) {
@@ -112,8 +108,6 @@ export const updateBattleResult = async (
     }
 
     await existingResult.save();
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_RESULT_UPDATED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     return existingResult;
   } catch (error) {
     throw new Error(error.message);

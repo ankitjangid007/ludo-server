@@ -1,3 +1,5 @@
+import { activityTags } from "../constants/activityTags.js";
+import UserActivity from "../models/userActivity.model.js";
 import {
   battleResultService,
   getAllBattleResults,
@@ -21,6 +23,15 @@ export const createBattleResult = async (req, res) => {
       file,
       cancellationReason
     );
+
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.BATTLE_RESULT_ADDED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
     res.status(201).json(result);
   } catch (error) {
     console.error(error);
@@ -37,6 +48,23 @@ export const updateBattleResultController = async (req, res) => {
       roomCode,
       battleResult
     );
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.BATTLE_RESULT_UPDATED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.BATTLE_RESULT_UPDATED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
+
     res.status(200).json(result);
   } catch (error) {
     console.log(error.message);
