@@ -13,25 +13,26 @@ const s3 = new AWS.S3();
 
 // Function to upload image to S3
 export async function uploadToS3(fileData) {
-    console.log(process.env.AWS_ACCESS_KEY_ID)
-    const [mimePart, base64Data] = fileData.split(";");
-    const imageType = mimePart.split("/")[1];
+    // Ensure that you POST a base64 data to your server.
+    // Let's assume the variable "base64" is one.
+    const base64Data = new Buffer.from(fileData.replace(/^data:image\/\w+;base64,/, ""), 'base64');
 
-    console.log(base64Data)
-    // Decode Base64 data
-    const imageBuffer = Buffer.from(base64Data, 'base64');
-    const timeStamp = new Date().getTime()
-    const key = `battle.${imageType}`
+    // Getting the file type, ie: jpeg, png or gif
+    const type = fileData.split(';')[0].split('/')[1];
 
+    // With this setup, each time your user uploads an image, will be overwritten.
+    // To prevent this, use a different Key each time.
+    // This won't be needed if they're uploading their avatar, hence the filename, userAvatar.js.
+    const timeStamp = new Date().getTime();
 
-
-    // Set up parameters for S3 upload
     const params = {
         Bucket: "battleresultimages",
-        Key: key,
-        Body: imageBuffer,
-        ContentType: "image",
-    };
+        Key: `${timeStamp}.${type}`, // type is not required
+        Body: base64Data,
+        ACL: 'public-read',
+        ContentEncoding: 'base64', // required
+        ContentType: `image/${type}` // required. Notice the back ticks
+    }
 
 
     return new Promise((resolve, rejects) => {
