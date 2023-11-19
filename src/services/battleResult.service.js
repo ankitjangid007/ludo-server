@@ -76,6 +76,13 @@ export const battleResultService = async (
       await wallet.save();
     }
 
+    if(battleRecords.length===2){
+      OpenBattle.findByIdAndUpdate(
+        { _id: battleId },
+        { $set: { status: "Finished" } }
+      )
+    }
+
     return savedResult;
   } catch (error) {
     console.log(error.message);
