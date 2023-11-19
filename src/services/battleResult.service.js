@@ -4,6 +4,7 @@ import OpenBattle from "../models/openBattle.model.js";
 import UserActivity from "../models/userActivity.model.js";
 import Wallet from "../models/wallet.model.js";
 import WinningCash from "../models/winningCash.model.js";
+import { uploadToS3 } from "../utils/fileUploder.js";
 import { resultFilter } from "../utils/resultFilter.js";
 import { getOpenBattleById } from "./openBattle.service.js";
 
@@ -16,12 +17,15 @@ export const battleResultService = async (
   cancellationReason
 ) => {
   try {
+
+    let fileUrl = file ? await uploadToS3(file) : null;
+
     const newResult = new BattleResult({
       userId,
       battleId,
       roomCode,
       battleResult,
-      file: battleResult === "I won" ? file : undefined,
+      file: battleResult === "I won" ? fileUrl : undefined,
       cancellationReason:
         battleResult === "Cancel" ? cancellationReason : undefined,
     });

@@ -15,16 +15,12 @@ const battleResultSchema = new mongoose.Schema(
       required: true,
     },
     file: {
-      type: Buffer,
-      required: function () {
-        return this.battleResult === "I won";
-      },
+      type: String,
+      default: null
     },
     cancellationReason: {
       type: String,
-      required: function () {
-        return this.battleResult === "Cancel";
-      },
+      default: null
     },
   },
   { versionKey: false, timestamps: true }
