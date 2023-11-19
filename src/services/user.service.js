@@ -12,7 +12,32 @@ export const createUser = async (userData) => {
 
 export const getAllUsers = async () => {
   try {
-    const users = await User.find();
+    const users = await User.aggregate([
+      {
+        '$lookup': {
+          'from': 'wallets',
+          'localField': '_id',
+          'foreignField': 'user',
+          'as': 'walletInfo'
+        }
+      }, {
+        '$lookup': {
+          'from': 'winningcashes',
+          'localField': '_id',
+          'foreignField': 'user',
+          'as': 'winningInfo'
+        }
+      }, {
+        '$unwind': {
+          'path': '$walletInfo'
+        }
+      }, {
+        '$unwind': {
+          'path': '$winningInfo'
+        }
+      }
+    ]);
+
     if (!users) {
       throw new Error("Could not find all users");
     }
