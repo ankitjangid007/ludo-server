@@ -27,6 +27,7 @@ const initSocket = (server) => {
 
     socket.on("send-play-request", async (data) => {
       // console.log("send-play-request", data);
+      const { userId, battleId, createdBy, status } = data;
       if (users[createdBy]?.socketId) {
         if (createdBy !== userId) {
           io.to(users[createdBy]?.socketId).emit("play-request", {
@@ -37,7 +38,6 @@ const initSocket = (server) => {
         }
       }
       await playRequestService(data);
-      const { userId, battleId, createdBy, status } = data;
 
       const res = await PlayRequest.findOne({ userId });
     });
