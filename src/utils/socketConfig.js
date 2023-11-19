@@ -1,7 +1,10 @@
 import { Server } from "socket.io";
 import PlayRequest from "../models/temp/playRequest.model.js";
 import { acceptRequestService } from "../services/temp/acceptRequest.service.js";
-import { playRequestService } from "../services/temp/playRequest.service.js";
+import {
+  deletePlayRequest,
+  playRequestService,
+} from "../services/temp/playRequest.service.js";
 import { getUserById } from "../services/user.service.js";
 import roomHandler from "../socket/roomHandler.js";
 
@@ -41,7 +44,10 @@ const initSocket = (server) => {
     });
 
     socket.on("cancel-play-request", async (data) => {
-      const { createdBy } = data;
+      const { createdBy, battleId } = data;
+
+      await deletePlayRequest(battleId);
+
       if (users[createdBy]?.socketId) {
         io.to(users[createdBy]?.socketId).emit("receive-cancel-play-request", {
           message: "play request cancelled",

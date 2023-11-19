@@ -11,8 +11,8 @@ export const playRequestController = async (req, res) => {
   try {
     const requestData = new PlayRequest(req.body);
     const data = await requestData.save();
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_REQUEST_RAISED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+    // Activity log
+    // UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_REQUEST_RAISED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     res.status(StatusCodes.CREATED).json(data);
   } catch (error) {
     res
@@ -37,8 +37,8 @@ export const deletePlayRequestController = async (req, res) => {
   try {
     const { battleId } = req.params;
     await deletePlayRequest(battleId);
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_REQUEST_DELETED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+    // Activity log
+    // UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_REQUEST_DELETED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     res.status(StatusCodes.OK).json("Deleted");
   } catch (error) {
     res
