@@ -13,7 +13,6 @@ import { io } from "../utils/socketConfig.js";
 import UserActivity from "../models/userActivity.model.js";
 import { activityTags } from "../constants/activityTags.js";
 
-
 // Controller to create an open battle
 export const createOpenBattleController = async (req, res) => {
   try {
@@ -31,8 +30,14 @@ export const createOpenBattleController = async (req, res) => {
 
     io.emit("new-open-bet", responseObj);
 
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_ADDED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.BATTLE_ADDED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
     res.status(StatusCodes.CREATED).json(openBattle);
   } catch (error) {
     res
@@ -80,6 +85,7 @@ export const getAllOpenBattle = async (req, res) => {
           entryFee: openBattle.entryFee,
           totalPrize: openBattle.totalPrize,
           status: openBattle.status,
+          participantId: openBattle.participant,
           participantName: participantData?.userName,
         };
       })
@@ -123,8 +129,14 @@ export const addParticipantController = async (req, res) => {
       battleId,
       requestedFrom
     );
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_JOINED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.BATTLE_JOINED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
     res.json(updatedOpenBattle);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -138,8 +150,14 @@ export const updateRoomCodeController = async (req, res) => {
       req.params.battleId,
       req.body.roomCode
     );
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.ROOM_CODE_ADDED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.ROOM_CODE_ADDED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
     res.status(StatusCodes.OK).json(updatedOpenBattle);
   } catch (error) {
     res
@@ -152,8 +170,14 @@ export const deleteBattleController = async (req, res) => {
   try {
     const { battleId } = req.params;
     await deleteOpenBattle(battleId);
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_DELETED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.BATTLE_DELETED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
     res.status(StatusCodes.OK).json("Cancelled open battle");
   } catch (error) {
     res
