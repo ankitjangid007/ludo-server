@@ -7,6 +7,7 @@ import WinningCash from "../models/winningCash.model.js";
 import { uploadToS3 } from "../utils/fileUploder.js";
 import { resultFilter } from "../utils/resultFilter.js";
 import { getOpenBattleById } from "./openBattle.service.js";
+import { Types } from "mongoose";
 
 export const battleResultService = async (
   userId,
@@ -17,7 +18,6 @@ export const battleResultService = async (
   cancellationReason
 ) => {
   try {
-
     let fileUrl = file ? await uploadToS3(file) : null;
 
     const newResult = new BattleResult({
@@ -76,11 +76,11 @@ export const battleResultService = async (
       await wallet.save();
     }
 
-    if(battleRecords.length===2){
+    if (battleRecords.length === 2) {
       OpenBattle.findByIdAndUpdate(
         { _id: battleId },
         { $set: { status: "Finished" } }
-      )
+      );
     }
 
     return savedResult;
@@ -193,6 +193,19 @@ export const getAllBattleResults = async (filter) => {
 export const getBattleResultsByUserId = async (userId) => {
   try {
     const results = await BattleResult.find({ userId });
+
+    return results;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+export const getBattleResultsByBattleId = async (battleId, userId) => {
+  try {
+    const results = await BattleResult.findOne({
+      battleId,
+      userId,
+    });
 
     return results;
   } catch (error) {

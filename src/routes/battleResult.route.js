@@ -2,6 +2,7 @@ import express from "express";
 import {
   createBattleResult,
   getBattleResults,
+  getBattleResultsByBattleController,
   getBattleResultsByUserController,
   updateBattleResultController,
 } from "../controllers/battleResult.controller.js";
@@ -20,5 +21,12 @@ router.get("/", verifyToken, getBattleResults);
 
 // Get battle by userId
 router.get("/:userId", verifyToken, getBattleResultsByUserController);
+
+// Get battle by battleId
+router.get(
+  "/byBattleId/:battleId",
+  verifyToken,
+  getBattleResultsByBattleController
+);
 
 export default router;

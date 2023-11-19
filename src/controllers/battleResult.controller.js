@@ -3,6 +3,7 @@ import UserActivity from "../models/userActivity.model.js";
 import {
   battleResultService,
   getAllBattleResults,
+  getBattleResultsByBattleId,
   getBattleResultsByUserId,
   updateBattleResult,
 } from "../services/battleResult.service.js";
@@ -87,7 +88,22 @@ export const getBattleResults = async (req, res) => {
 
 export const getBattleResultsByUserController = async (req, res) => {
   try {
-    const battles = await getBattleResultsByUserId(req.params.userId);
+    const { userId } = req.params;
+    const battles = await getBattleResultsByUserId(userId);
+    res.status(200).json(battles);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching battle results" });
+  }
+};
+
+export const getBattleResultsByBattleController = async (req, res) => {
+  try {
+    const { battleId } = req.params;
+    const battles = await getBattleResultsByBattleId(
+      battleId,
+      req.decoded.userId
+    );
+
     res.status(200).json(battles);
   } catch (error) {
     res.status(500).json({ message: "Error fetching battle results" });
