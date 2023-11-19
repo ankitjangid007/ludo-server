@@ -27,11 +27,6 @@ const initSocket = (server) => {
 
     socket.on("send-play-request", async (data) => {
       // console.log("send-play-request", data);
-      await playRequestService(data);
-      const { userId, battleId, createdBy, status } = data;
-
-      const res = await PlayRequest.findOne({ userId });
-
       if (users[createdBy]?.socketId) {
         if (createdBy !== userId) {
           io.to(users[createdBy]?.socketId).emit("play-request", {
@@ -41,33 +36,34 @@ const initSocket = (server) => {
           });
         }
       }
+      await playRequestService(data);
+      const { userId, battleId, createdBy, status } = data;
+
+      const res = await PlayRequest.findOne({ userId });
     });
 
     socket.on("cancel-play-request", async (data) => {
       const { createdBy, battleId } = data;
-
-      await deletePlayRequest(battleId);
 
       if (users[createdBy]?.socketId) {
         io.to(users[createdBy]?.socketId).emit("receive-cancel-play-request", {
           message: "play request cancelled",
         });
       }
+      await deletePlayRequest(battleId);
     });
 
     socket.on("add-participant-request", async (data) => {
-      console.log("<><><><>", data);
       const { battleId, requestedFrom, status, createdBy } = data;
-
-      await acceptRequestService({
+      io.to(users[requestedFrom]?.socketId).emit("participant-added", {
+        message: "You have been added as a participant.",
         battleId,
         requestedFrom,
         status,
         createdBy,
       });
 
-      io.to(users[requestedFrom]?.socketId).emit("participant-added", {
-        message: "You have been added as a participant.",
+      await acceptRequestService({
         battleId,
         requestedFrom,
         status,
@@ -76,7 +72,6 @@ const initSocket = (server) => {
     });
 
     socket.on("cancel-accept-request", async (data) => {
-      console.log("<><>>", data);
       const { requestedFrom } = data;
       if (users[requestedFrom]?.socketId) {
         io.to(users[requestedFrom]?.socketId).emit(
@@ -98,7 +93,6 @@ const initSocket = (server) => {
     });
 
     socket.on("payment-status", (data) => {
-      console.log("data>>>", data);
       const { userId, requestId } = data;
       io.to(users[userId]?.socketId).emit("fetch-payment-status", {
         status: true,
