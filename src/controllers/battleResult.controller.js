@@ -58,14 +58,6 @@ export const updateBattleResultController = async (req, res) => {
       requestParams: req.params,
       requestQuery: req.query,
     });
-    // Activity log
-    UserActivity.create({
-      userId: req.decoded.userId,
-      activityTag: activityTags.BATTLE_RESULT_UPDATED,
-      requestBody: req.body,
-      requestParams: req.params,
-      requestQuery: req.query,
-    });
 
     res.status(200).json(result);
   } catch (error) {
@@ -77,7 +69,6 @@ export const updateBattleResultController = async (req, res) => {
 export const getBattleResults = async (req, res) => {
   try {
     const { filter } = req.query;
-
     const results = await getAllBattleResults(filter);
     res.json(results);
   } catch (error) {

@@ -1,7 +1,6 @@
-import { activityTags } from "../constants/activityTags.js";
+import { Types } from "mongoose";
 import BattleResult from "../models/battleResult.model.js";
 import OpenBattle from "../models/openBattle.model.js";
-import UserActivity from "../models/userActivity.model.js";
 import Wallet from "../models/wallet.model.js";
 import WinningCash from "../models/winningCash.model.js";
 import { uploadToS3 } from "../utils/fileUploder.js";
@@ -104,21 +103,50 @@ export const updateBattleResult = async (
       roomCode,
     });
 
+    // Find second user's result 
+    const secondUserResult = await BattleResult.aggregate([
+      {
+        '$match': {
+          'userId': {
+            '$ne': new Types.ObjectId(userId)
+          },
+          'battleId': new Types.ObjectId(battleId),
+          'roomCode': roomCode
+        }
+      }
+    ])
+
     if (!existingResult) {
       throw new Error("Battle result not found.");
     }
 
+    const battle = await getOpenBattleById(battleId);
+
     existingResult.battleResult = battleResult;
-    if (existingResult) {
+    // If admin pass battle status I won then add amount to pass userId and change I lost status of second user
+    if (battleResult === "I won") {
+      console.log(">>>>>>>>>>>>>>..")
       const wallet = await WinningCash.findOne({ user: userId });
-      const battle = await getOpenBattleById(battleId);
       if (battleResult == "I won") {
         wallet.balance += battle.totalPrize;
         await wallet.save();
       }
+
+      // Update status of respective user
+      secondUserResult.length === 1 ? BattleResult.findOneAndUpdate({ userId: secondUserResult[0].userId, battleId, roomCode }, { $set: { battleResult: "I lost" } }) : null;
+
+    } else if (battleResult === "I lost") {
+      const wallet = secondUserResult.length === 1 ? await WinningCash.findOne({ user: secondUserResult[0].userId }) : null;
+      if (wallet) {
+        wallet.balance += battle.totalPrize;
+        await wallet.save();
+      }
+    } else {
+
     }
 
-    await existingResult.save();
+    existingResult.battleResult = battleResult;
+    existingResult.save();
     return existingResult;
   } catch (error) {
     throw new Error(error.message);
@@ -127,6 +155,7 @@ export const updateBattleResult = async (
 
 export const getAllBattleResults = async (filter) => {
   try {
+
     if (filter === "won") {
       return await BattleResult.find({ battleResult: "I won" });
     } else if (filter === "lost") {
