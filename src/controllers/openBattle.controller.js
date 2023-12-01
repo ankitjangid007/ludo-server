@@ -104,6 +104,7 @@ export const getAllOpenBattle = async (req, res) => {
 // Controller to get an open battle by ID
 export const getOpenBattleByIdController = async (req, res) => {
   try {
+    console.log(">>>>(((((((((((((((((((((999", req.params.openBattleId)
     const openBattle = await getOpenBattleById(req.params.openBattleId);
     if (openBattle) {
       res.status(StatusCodes.OK).json(openBattle);

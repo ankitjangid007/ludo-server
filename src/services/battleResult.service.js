@@ -6,7 +6,6 @@ import WinningCash from "../models/winningCash.model.js";
 import { uploadToS3 } from "../utils/fileUploder.js";
 import { resultFilter } from "../utils/resultFilter.js";
 import { getOpenBattleById } from "./openBattle.service.js";
-import { Types } from "mongoose";
 
 export const battleResultService = async (
   userId,
@@ -141,7 +140,20 @@ export const updateBattleResult = async (
         wallet.balance += battle.totalPrize;
         await wallet.save();
       }
-    } else {
+    } else if (battleResult === "Cancel") {
+      const firstUsersWallet = await Wallet.findOne({ user: userId });
+      const secondUsersWallet = await Wallet.findOne({ user: secondUserResult[0].userId })
+
+      // Fetch entry fees
+      const entryFees = await OpenBattle.findOne({ roomCode });
+
+      // Update their main wallet
+      firstUsersWallet.balance += entryFees.entryFee;
+      secondUsersWallet.balance += entryFees.entryFee;
+      await firstUsersWallet.save();
+      await secondUsersWallet.save();
+      // Update the first user's status
+      await BattleResult.findOneAndUpdate({ userId, battleId, roomCode }, { $set: { battleResult: "Cancel" } });
 
     }
 

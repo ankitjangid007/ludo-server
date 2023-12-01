@@ -6,11 +6,14 @@ import {
 } from "../../services/temp/acceptRequest.service.js";
 import UserActivity from "../../models/userActivity.model.js";
 import { activityTags } from "../../constants/activityTags.js";
+import OpenBattle from "../../models/openBattle.model.js";
 
 export const accpetRequestController = async (req, res) => {
   try {
     const requestData = new AcceptRequest(req.body);
+
     const data = await requestData.save();
+    // await OpenBattle.findByIdAndUpdate({_id:req.body.battleId},{$set:{status:}})
     // Activity log
     // UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.BATTLE_REQUEST_ACCEPTED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
     res.status(StatusCodes.CREATED).json(data);
