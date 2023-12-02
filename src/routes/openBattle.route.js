@@ -7,6 +7,8 @@ import {
   addParticipantController,
   updateRoomCodeController,
   getAllBattleByStatusController,
+  createNewBattleByUserController,
+  getAllCreatedBattleController,
 } from "../controllers/openBattle.controller.js";
 import { verifyToken } from "../middleware/VerifyToken.js";
 
@@ -35,5 +37,14 @@ router.put(
 
 // delete open battle
 router.delete("/:battleId", verifyToken, deleteBattleController);
+
+
+// <----------------------------------------------New Apis for battle creation ( Ajay )---------------------------------------->
+// Create a new battle result
+router.post("/newBattle", verifyToken, createNewBattleByUserController);
+// Get newlyCreated battles for all online users
+router.get("/createdBattles", verifyToken, getAllCreatedBattleController);
+// Get all Requested battles for logged in users
+router.get("/requestedBattles", verifyToken, )
 
 export default router;

@@ -7,6 +7,9 @@ import {
   addBattleParticipant,
   updateRoomCode,
   getBattlesByStatus,
+  createNewBattleByUserService,
+  getAllCreatedBattleService,
+  getAllRequestedBattleService,
 } from "../services/openBattle.service.js";
 import { getUserById } from "../services/user.service.js";
 import { io } from "../utils/socketConfig.js";
@@ -186,3 +189,66 @@ export const deleteBattleController = async (req, res) => {
       .json({ error: error.message });
   }
 };
+
+
+
+// <-------------------------------------------New Apis controller for battle ( Ajay )----------------------------------->
+// Create new battle by user 
+export const createNewBattleByUserController = async (req, res) => {
+  const battleInfo = req.body;
+  const newlyCreatedBattle = await createNewBattleByUserService(battleInfo);
+  const userData = await getUserById(req.decoded.userId);
+  const responseObj = {
+    userId: userData?._id,
+    userName: userData?.userName,
+    battleId: newlyCreatedBattle?._id,
+    entryFee: newlyCreatedBattle?.entryFee,
+    totalPrize: newlyCreatedBattle?.totalPrize,
+    status: newlyCreatedBattle?.status,
+  };
+
+  // Emit event 
+  io.emit("new-open-bet", responseObj);
+
+  // Activity log
+  UserActivity.create({
+    userId: req.decoded.userId,
+    activityTag: activityTags.BATTLE_ADDED,
+    requestBody: req.body,
+    requestParams: req.params,
+    requestQuery: req.query,
+  });
+  res.status(StatusCodes.CREATED).json(newlyCreatedBattle);
+}
+
+// Get all created battle for all online users
+export const getAllCreatedBattleController = async (req, res) => {
+  try {
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
+    const skip = limit * (pageNumber - 1);
+    const allNewlyCreatedBattles = await getAllCreatedBattleService(limit, skip);
+    return res.status(StatusCodes.OK).json(allNewlyCreatedBattles);
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+
+}
+
+// Get all requested battle for logged in users
+export const getAllRequestedBattleController = async (req, res) => {
+  try {
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
+    const skip = limit * (pageNumber - 1);
+    const allRequestedBattleList = await getAllRequestedBattleService(req.decoded.userId, limit, skip);
+    return res.status(StatusCodes.OK).json(allRequestedBattleList);
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+
+}
