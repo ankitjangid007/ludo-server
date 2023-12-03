@@ -6,6 +6,7 @@ const BattleSchema = new mongoose.Schema(
         entryFee: { type: Number, required: true },
         totalPrize: { type: Number, required: true },
         roomCode: { type: String, default: null },
+        isRequestAccepted: { type: Boolean, default: false },
         status: {
             type: String,
             enum: ["Created", "Requested", "Running"],

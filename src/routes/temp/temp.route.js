@@ -1,8 +1,10 @@
 import express from "express";
 import {
+  acceptRequestOnCreatorEndController,
   accpetRequestController,
   deleteAcceptRequestController,
   getAcceptRequestController,
+  requestToPalyController,
 } from "../../controllers/temp/acceptRequest.controller.js";
 import {
   deletePlayRequestController,
@@ -28,5 +30,17 @@ router.post("/acceptrequest", verifyToken, accpetRequestController);
 router.get("/acceptrequest/:battleId", verifyToken, getAcceptRequestController);
 
 router.delete("/acceptrequest/:battleId", deleteAcceptRequestController);
+
+
+
+//<------------------------------------------Action on created battles ( Ajay )---------------------------------->
+// Send play request to battle creator to allow and reject the request
+router.post("/requestToPlay/:battleId",verifyToken,requestToPalyController );
+
+// Accept or reject request on battle creator end to allow participant to play battle
+router.post("/acceptRequest/:battleId", verifyToken, acceptRequestOnCreatorEndController);
+
+// 
+router.post("/rejectToPlay/:battleId",verifyToken,requestToPalyController )
 
 export default router;

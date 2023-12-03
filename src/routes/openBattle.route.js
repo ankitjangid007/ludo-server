@@ -9,6 +9,7 @@ import {
   getAllBattleByStatusController,
   createNewBattleByUserController,
   getAllCreatedBattleController,
+  getAllRunningBattleController,
 } from "../controllers/openBattle.controller.js";
 import { verifyToken } from "../middleware/VerifyToken.js";
 
@@ -43,8 +44,10 @@ router.delete("/:battleId", verifyToken, deleteBattleController);
 // Create a new battle result
 router.post("/newBattle", verifyToken, createNewBattleByUserController);
 // Get newlyCreated battles for all online users
-router.get("/createdBattles", verifyToken, getAllCreatedBattleController);
+router.get("/created/battles", verifyToken, getAllCreatedBattleController);
 // Get all Requested battles for logged in users
-router.get("/requestedBattles", verifyToken, )
+// router.get("/requested/Battles", verifyToken, getAllRequestedBattleController);
+// Gte all Running battles 
+router.get("/running/Battles", verifyToken, getAllRunningBattleController)
 
 export default router;

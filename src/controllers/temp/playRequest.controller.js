@@ -6,6 +6,7 @@ import {
 } from "../../services/temp/playRequest.service.js";
 import UserActivity from "../../models/userActivity.model.js";
 import { activityTags } from "../../constants/activityTags.js";
+import Battle from "../../models/battle.model.js";
 
 export const playRequestController = async (req, res) => {
   try {
@@ -46,3 +47,19 @@ export const deletePlayRequestController = async (req, res) => {
       .json({ error: error.message });
   }
 };
+
+//<------------------------------------------------Action on created battles ( Ajay )-------------------------------------------->
+export const requestToPlay = async (req, res) => {
+  try {
+    const battleId = req.params.battleId;
+
+    // Change the status of created battle ( Created to Requested ), Using that request open for other user to accept and reject;
+    await Battle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Requested" } });
+    return res.status(StatusCodes.OK).json({ message: "Battle goes in requested mode successfully" });
+
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+}

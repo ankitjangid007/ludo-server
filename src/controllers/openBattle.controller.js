@@ -9,7 +9,7 @@ import {
   getBattlesByStatus,
   createNewBattleByUserService,
   getAllCreatedBattleService,
-  getAllRequestedBattleService,
+  getAllRunningBattleService,
 } from "../services/openBattle.service.js";
 import { getUserById } from "../services/user.service.js";
 import { io } from "../utils/socketConfig.js";
@@ -196,7 +196,8 @@ export const deleteBattleController = async (req, res) => {
 // Create new battle by user 
 export const createNewBattleByUserController = async (req, res) => {
   const battleInfo = req.body;
-  const newlyCreatedBattle = await createNewBattleByUserService(battleInfo);
+  const userId = req.decoded.userId;
+  const newlyCreatedBattle = await createNewBattleByUserService(userId,battleInfo);
   const userData = await getUserById(req.decoded.userId);
   const responseObj = {
     userId: userData?._id,
@@ -227,7 +228,8 @@ export const getAllCreatedBattleController = async (req, res) => {
     const limit = req.query.limit ? Number(req.query.limit) : 10;
     const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
     const skip = limit * (pageNumber - 1);
-    const allNewlyCreatedBattles = await getAllCreatedBattleService(limit, skip);
+    const userId = req.decoded.userId;
+    const allNewlyCreatedBattles = await getAllCreatedBattleService(userId,limit, skip);
     return res.status(StatusCodes.OK).json(allNewlyCreatedBattles);
   } catch (error) {
     res
@@ -238,17 +240,32 @@ export const getAllCreatedBattleController = async (req, res) => {
 }
 
 // Get all requested battle for logged in users
-export const getAllRequestedBattleController = async (req, res) => {
+// export const getAllRequestedBattleController = async (req, res) => {
+//   try {
+//     const limit = req.query.limit ? Number(req.query.limit) : 10;
+//     const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
+//     const skip = limit * (pageNumber - 1);
+//     const allRequestedBattleList = await getAllRequestedBattleService(req.decoded.userId, limit, skip);
+//     return res.status(StatusCodes.OK).json(allRequestedBattleList);
+//   } catch (error) {
+//     res
+//       .status(StatusCodes.INTERNAL_SERVER_ERROR)
+//       .json({ error: error.message });
+//   }
+
+// }
+
+// Get all running battle for logged in users
+export const getAllRunningBattleController = async (req, res) => {
   try {
     const limit = req.query.limit ? Number(req.query.limit) : 10;
     const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
     const skip = limit * (pageNumber - 1);
-    const allRequestedBattleList = await getAllRequestedBattleService(req.decoded.userId, limit, skip);
-    return res.status(StatusCodes.OK).json(allRequestedBattleList);
+    const allRunningBattleList = await getAllRunningBattleService(req.decoded.userId, limit, skip);
+    return res.status(StatusCodes.OK).json(allRunningBattleList);
   } catch (error) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: error.message });
   }
-
 }
