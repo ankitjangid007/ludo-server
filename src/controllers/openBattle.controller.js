@@ -17,6 +17,7 @@ import { io } from "../utils/socketConfig.js";
 import UserActivity from "../models/userActivity.model.js";
 import { activityTags } from "../constants/activityTags.js";
 import Battle from "../models/battle.model.js";
+import Wallet from "../models/wallet.model.js";
 
 // Controller to create an open battle
 export const createOpenBattleController = async (req, res) => {
@@ -296,6 +297,21 @@ export const acceptRequestOnCreatorEndController = async (req, res) => {
           { _id: battleId },
           { $set: { status: "Created", participant: null } }
         );
+
+    // Fetch the battle
+    const battle = await Battle.findById(battleId);
+
+    const createrWallet = await Wallet.findOne({ user: battle.userId });
+    const participantWallet = await Wallet.findOne({
+      user: battle.participant,
+    });
+
+    createrWallet.balance -= battle.entryFee;
+    participantWallet.balance -= battle.entryFee;
+
+    createrWallet.save();
+    participantWallet.save();
+
     return res
       .status(StatusCodes.OK)
       .json({ message: "Battle request accepted successfully" });

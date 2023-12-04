@@ -65,7 +65,7 @@ export const battleResultService = async (
 
     if (wonRecord && lostRecord) {
       const wallet = await WinningCash.findOne({ user: wonRecord.userId });
-      const battle = await getOpenBattleById(wonRecord.battleId);
+      const battle = await getBattleById(wonRecord.battleId);
       OpenBattle.findByIdAndUpdate(
         { _id: battleId },
         { $set: { status: "Finished" } }
