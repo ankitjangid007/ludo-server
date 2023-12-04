@@ -237,12 +237,12 @@ export const getAllCreatedBattleService = async (userId, limit, skip) => {
             createdAt: -1,
           },
         },
-        {
-          $skip: skip,
-        },
-        {
-          $limit: limit,
-        },
+        // {
+        //   $skip: skip,
+        // },
+        // {
+        //   $limit: limit,
+        // },
       ]);
     } catch (error) {
       throw new Error("Could not get requested battles" + error.message);

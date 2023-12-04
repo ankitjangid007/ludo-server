@@ -237,7 +237,7 @@ export const getAllCreatedBattleController = async (req, res) => {
 // Get all running battle for logged in users
 export const getAllRunningBattleController = async (req, res) => {
   try {
-    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
     const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
     const skip = limit * (pageNumber - 1);
     const allRunningBattleList = await getAllRunningBattleService(
