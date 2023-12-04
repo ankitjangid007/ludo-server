@@ -10,11 +10,13 @@ import {
   createNewBattleByUserService,
   getAllCreatedBattleService,
   getAllRunningBattleService,
+  getBattleById,
 } from "../services/openBattle.service.js";
 import { getUserById } from "../services/user.service.js";
 import { io } from "../utils/socketConfig.js";
 import UserActivity from "../models/userActivity.model.js";
 import { activityTags } from "../constants/activityTags.js";
+import Battle from "../models/battle.model.js";
 
 // Controller to create an open battle
 export const createOpenBattleController = async (req, res) => {
@@ -107,7 +109,6 @@ export const getAllOpenBattle = async (req, res) => {
 // Controller to get an open battle by ID
 export const getOpenBattleByIdController = async (req, res) => {
   try {
-    console.log(">>>>(((((((((((((((((((((999", req.params.openBattleId)
     const openBattle = await getOpenBattleById(req.params.openBattleId);
     if (openBattle) {
       res.status(StatusCodes.OK).json(openBattle);
@@ -147,29 +148,6 @@ export const addParticipantController = async (req, res) => {
   }
 };
 
-// Controller to update the room code for an open battle
-export const updateRoomCodeController = async (req, res) => {
-  try {
-    const updatedOpenBattle = await updateRoomCode(
-      req.params.battleId,
-      req.body.roomCode
-    );
-    // Activity log
-    UserActivity.create({
-      userId: req.decoded.userId,
-      activityTag: activityTags.ROOM_CODE_ADDED,
-      requestBody: req.body,
-      requestParams: req.params,
-      requestQuery: req.query,
-    });
-    res.status(StatusCodes.OK).json(updatedOpenBattle);
-  } catch (error) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: error.message });
-  }
-};
-
 export const deleteBattleController = async (req, res) => {
   try {
     const { battleId } = req.params;
@@ -190,14 +168,16 @@ export const deleteBattleController = async (req, res) => {
   }
 };
 
-
-
 // <-------------------------------------------New Apis controller for battle ( Ajay )----------------------------------->
-// Create new battle by user 
+// Create new battle by user
 export const createNewBattleByUserController = async (req, res) => {
   const battleInfo = req.body;
   const userId = req.decoded.userId;
-  const newlyCreatedBattle = await createNewBattleByUserService(userId,battleInfo);
+  const newlyCreatedBattle = await createNewBattleByUserService(
+    userId,
+    battleInfo
+  );
+
   const userData = await getUserById(req.decoded.userId);
   const responseObj = {
     userId: userData?._id,
@@ -208,7 +188,7 @@ export const createNewBattleByUserController = async (req, res) => {
     status: newlyCreatedBattle?.status,
   };
 
-  // Emit event 
+  // Emit event
   io.emit("new-open-bet", responseObj);
 
   // Activity log
@@ -220,7 +200,7 @@ export const createNewBattleByUserController = async (req, res) => {
     requestQuery: req.query,
   });
   res.status(StatusCodes.CREATED).json(newlyCreatedBattle);
-}
+};
 
 // Get all created battle for all online users
 export const getAllCreatedBattleController = async (req, res) => {
@@ -229,15 +209,34 @@ export const getAllCreatedBattleController = async (req, res) => {
     const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
     const skip = limit * (pageNumber - 1);
     const userId = req.decoded.userId;
-    const allNewlyCreatedBattles = await getAllCreatedBattleService(userId,limit, skip);
+    const allNewlyCreatedBattles = await getAllCreatedBattleService(userId);
+
+    const responseArray = await Promise.all(
+      allNewlyCreatedBattles.map(async (openBattle) => {
+        return {
+          userId: openBattle?.userInfo?._id,
+          userName: openBattle?.userInfo?.userName,
+          battleId: openBattle._id,
+          entryFee: openBattle.entryFee,
+          totalPrize: openBattle.totalPrize,
+          status: openBattle.status,
+          participantId: openBattle?.participant,
+          isRequestAccepted: openBattle?.isRequestAccepted,
+          participantName: openBattle?.participantData?.userName,
+        };
+      })
+    );
+
+    io.emit("fetch-open-battle", responseArray);
+
     return res.status(StatusCodes.OK).json(allNewlyCreatedBattles);
   } catch (error) {
+    console.log(error.message);
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: error.message });
   }
-
-}
+};
 
 // Get all requested battle for logged in users
 // export const getAllRequestedBattleController = async (req, res) => {
@@ -261,11 +260,109 @@ export const getAllRunningBattleController = async (req, res) => {
     const limit = req.query.limit ? Number(req.query.limit) : 10;
     const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
     const skip = limit * (pageNumber - 1);
-    const allRunningBattleList = await getAllRunningBattleService(req.decoded.userId, limit, skip);
+    const allRunningBattleList = await getAllRunningBattleService(
+      req.decoded.userId,
+      limit,
+      skip
+    );
     return res.status(StatusCodes.OK).json(allRunningBattleList);
   } catch (error) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: error.message });
   }
-}
+};
+
+//<------------------------------------------------Request Handler ----------------------------->
+export const requestToPlayController = async (req, res) => {
+  try {
+    const { battleId } = req.params;
+    const participantId = req.decoded.userId;
+    const actionOnRequest = req.body.action;
+
+    actionOnRequest
+      ? await Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Requested", participant: participantId } }
+        )
+      : await Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Created", participant: null } }
+        );
+
+    res
+      .status(StatusCodes.OK)
+      .json({ message: "Battle request sent successfully" });
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+};
+
+// Accept request on battle creator end ( Allow participant to play the battle)
+export const acceptRequestOnCreatorEndController = async (req, res) => {
+  try {
+    const { battleId } = req.params;
+    const actionOnRequest = req.body.action;
+
+    // If creator reject the play request the  remove participant from request and if accept then update the status of request;
+    actionOnRequest
+      ? await Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Requested", isRequestAccepted: true } }
+        )
+      : await Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Created", participant: null } }
+        );
+    return res
+      .status(StatusCodes.OK)
+      .json({ message: "Battle request accepted successfully" });
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+};
+
+// Controller to get an open battle by ID
+export const getBattleByIdController = async (req, res) => {
+  try {
+    const openBattle = await getBattleById(req.params.battleId);
+    if (openBattle) {
+      res.status(StatusCodes.OK).json(openBattle);
+    } else {
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ error: "Open battle not found" });
+    }
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+};
+
+// Controller to update the room code for an open battle
+export const updateRoomCodeController = async (req, res) => {
+  try {
+    const updatedOpenBattle = await updateRoomCode(
+      req.params.battleId,
+      req.body.roomCode
+    );
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.ROOM_CODE_ADDED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
+    res.status(StatusCodes.OK).json(updatedOpenBattle);
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+};

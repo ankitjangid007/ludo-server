@@ -25,62 +25,10 @@ const initSocket = (server) => {
       console.log("User connected");
     });
 
-    socket.on("send-play-request", async (data) => {
-      // console.log("send-play-request", data);
-      const { userId, battleId, createdBy, status } = data;
-      if (users[createdBy]?.socketId) {
-        if (createdBy !== userId) {
-          io.to(users[createdBy]?.socketId).emit("play-request", {
-            message: "You received a play request!",
-            status,
-            requestedFrom: userId,
-          });
-        }
-      }
-      await playRequestService(data);
-
-      const res = await PlayRequest.findOne({ userId });
-    });
-
-    socket.on("cancel-play-request", async (data) => {
-      const { createdBy, battleId } = data;
-
-      if (users[createdBy]?.socketId) {
-        io.to(users[createdBy]?.socketId).emit("receive-cancel-play-request", {
-          message: "play request cancelled",
-        });
-      }
-      await deletePlayRequest(battleId);
-    });
-
-    socket.on("add-participant-request", async (data) => {
-      const { battleId, requestedFrom, status, createdBy } = data;
-      io.to(users[requestedFrom]?.socketId).emit("participant-added", {
-        message: "You have been added as a participant.",
-        battleId,
-        requestedFrom,
-        status,
-        createdBy,
+    socket.on("get-bettles", (data) => {
+      io.emit("fetch-all-battle", {
+        message: "You will receive the data",
       });
-
-      await acceptRequestService({
-        battleId,
-        requestedFrom,
-        status,
-        createdBy,
-      });
-    });
-
-    socket.on("cancel-accept-request", async (data) => {
-      const { requestedFrom } = data;
-      if (users[requestedFrom]?.socketId) {
-        io.to(users[requestedFrom]?.socketId).emit(
-          "receive-cancel-accept-request",
-          {
-            message: "accept request cancelled",
-          }
-        );
-      }
     });
 
     socket.on("submit-room-code", (data) => {

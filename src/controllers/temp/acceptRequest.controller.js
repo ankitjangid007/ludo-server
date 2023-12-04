@@ -58,15 +58,25 @@ export const requestToPalyController = async (req, res) => {
     const participantId = req.decoded.userId;
     const actionOnRequest = req.body.action;
 
-    await actionOnRequest ? Battle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Requested", participant: participantId } }) : Battle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Created", participant: null } });
+    (await actionOnRequest)
+      ? Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Requested", participant: participantId } }
+        )
+      : Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Created", participant: null } }
+        );
 
-    res.status(StatusCodes.OK).json({ message: "Battle request accepted successfully" });
+    res
+      .status(StatusCodes.OK)
+      .json({ message: "Battle request accepted successfully" });
   } catch (error) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: error.message });
   }
-}
+};
 
 // Accept request on battle creator end ( Allow participant to play the battle)
 export const acceptRequestOnCreatorEndController = async (req, res) => {
@@ -75,11 +85,21 @@ export const acceptRequestOnCreatorEndController = async (req, res) => {
     const actionOnRequest = req.body.action;
 
     // If creator reject the play request the  remove participant from request and if accept then update the status of request;
-    await actionOnRequest ? Battle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Requested", isRequestAccepted: true } }) : Battle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Requested", participant: null } });
-    return res.status(StatusCodes.OK).json({ message: "Battle request accepted successfully" });
+    (await actionOnRequest)
+      ? Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Requested", isRequestAccepted: true } }
+        )
+      : Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Requested", participant: null } }
+        );
+    return res
+      .status(StatusCodes.OK)
+      .json({ message: "Battle request accepted successfully" });
   } catch (error) {
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: error.message });
   }
-}
+};
