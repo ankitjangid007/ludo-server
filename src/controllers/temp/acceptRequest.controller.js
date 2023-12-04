@@ -56,8 +56,9 @@ export const requestToPalyController = async (req, res) => {
   try {
     const { battleId } = req.params;
     const participantId = req.decoded.userId;
+    const actionOnRequest = req.body.action;
 
-    await Battle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Requested", participant: participantId } })
+    await actionOnRequest ? Battle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Requested", participant: participantId } }) : Battle.findByIdAndUpdate({ _id: battleId }, { $set: { status: "Created", participant: null } });
 
     res.status(StatusCodes.OK).json({ message: "Battle request accepted successfully" });
   } catch (error) {
