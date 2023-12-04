@@ -1,11 +1,11 @@
 import { Types } from "mongoose";
 import BattleResult from "../models/battleResult.model.js";
-import OpenBattle from "../models/openBattle.model.js";
 import Wallet from "../models/wallet.model.js";
 import WinningCash from "../models/winningCash.model.js";
 import { uploadToS3 } from "../utils/fileUploder.js";
 import { resultFilter } from "../utils/resultFilter.js";
 import { getBattleById, getOpenBattleById } from "./openBattle.service.js";
+import Battle from "../models/battle.model.js";
 
 export const battleResultService = async (
   userId,
@@ -38,7 +38,7 @@ export const battleResultService = async (
       battleRecords[0].battleResult === "Cancel" &&
       battleRecords[1].battleResult === "Cancel"
     ) {
-      const battleInfo = await OpenBattle.findById({ _id: battleId });
+      const battleInfo = await Battle.findById({ _id: battleId });
       // Update the wallet of both the participants and change the battle status to finished
       await Promise.all([
         Wallet.findOneAndUpdate(
@@ -49,7 +49,7 @@ export const battleResultService = async (
           { user: battleRecords[1].userId },
           { $inc: { balance: battleInfo.entryFee } }
         ),
-        OpenBattle.findByIdAndUpdate(
+        Battle.findByIdAndUpdate(
           { _id: battleId },
           { $set: { status: "Finished" } }
         ),
@@ -66,7 +66,7 @@ export const battleResultService = async (
     if (wonRecord && lostRecord) {
       const wallet = await WinningCash.findOne({ user: wonRecord.userId });
       const battle = await getBattleById(wonRecord.battleId);
-      OpenBattle.findByIdAndUpdate(
+      Battle.findByIdAndUpdate(
         { _id: battleId },
         { $set: { status: "Finished" } }
       ),
@@ -75,7 +75,7 @@ export const battleResultService = async (
     }
 
     if (battleRecords.length === 2) {
-      OpenBattle.findByIdAndUpdate(
+      Battle.findByIdAndUpdate(
         { _id: battleId },
         { $set: { status: "Finished" } }
       );
@@ -156,7 +156,7 @@ export const updateBattleResult = async (
       });
 
       // Fetch entry fees
-      const entryFees = await OpenBattle.findOne({ roomCode });
+      const entryFees = await Battle.findOne({ roomCode });
 
       // Update their main wallet
       firstUsersWallet.balance += entryFees.entryFee;
