@@ -148,26 +148,6 @@ export const addParticipantController = async (req, res) => {
   }
 };
 
-export const deleteBattleController = async (req, res) => {
-  try {
-    const { battleId } = req.params;
-    await deleteOpenBattle(battleId);
-    // Activity log
-    UserActivity.create({
-      userId: req.decoded.userId,
-      activityTag: activityTags.BATTLE_DELETED,
-      requestBody: req.body,
-      requestParams: req.params,
-      requestQuery: req.query,
-    });
-    res.status(StatusCodes.OK).json("Cancelled open battle");
-  } catch (error) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: error.message });
-  }
-};
-
 // <-------------------------------------------New Apis controller for battle ( Ajay )----------------------------------->
 // Create new battle by user
 export const createNewBattleByUserController = async (req, res) => {
@@ -344,6 +324,26 @@ export const getBattleByIdController = async (req, res) => {
   }
 };
 
+export const deleteBattleController = async (req, res) => {
+  try {
+    const { battleId } = req.params;
+    await deleteOpenBattle(battleId);
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.BATTLE_DELETED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
+    res.status(StatusCodes.OK).json("Cancelled open battle");
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
+  }
+};
+
 // Controller to update the room code for an open battle
 export const updateRoomCodeController = async (req, res) => {
   try {
@@ -351,14 +351,6 @@ export const updateRoomCodeController = async (req, res) => {
       req.params.battleId,
       req.body.roomCode
     );
-    // Activity log
-    UserActivity.create({
-      userId: req.decoded.userId,
-      activityTag: activityTags.ROOM_CODE_ADDED,
-      requestBody: req.body,
-      requestParams: req.params,
-      requestQuery: req.query,
-    });
     res.status(StatusCodes.OK).json(updatedOpenBattle);
   } catch (error) {
     res

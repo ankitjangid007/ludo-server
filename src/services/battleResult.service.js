@@ -5,7 +5,7 @@ import Wallet from "../models/wallet.model.js";
 import WinningCash from "../models/winningCash.model.js";
 import { uploadToS3 } from "../utils/fileUploder.js";
 import { resultFilter } from "../utils/resultFilter.js";
-import { getOpenBattleById } from "./openBattle.service.js";
+import { getBattleById, getOpenBattleById } from "./openBattle.service.js";
 
 export const battleResultService = async (
   userId,
@@ -102,29 +102,31 @@ export const updateBattleResult = async (
       roomCode,
     });
 
-    // Find second user's result 
+    // Find second user's result
     const secondUserResult = await BattleResult.aggregate([
       {
-        '$match': {
-          'userId': {
-            '$ne': new Types.ObjectId(userId)
+        $match: {
+          userId: {
+            $ne: new Types.ObjectId(userId),
           },
-          'battleId': new Types.ObjectId(battleId),
-          'roomCode': roomCode
-        }
-      }
-    ])
+          battleId: new Types.ObjectId(battleId),
+          roomCode: roomCode,
+        },
+      },
+    ]);
 
     if (!existingResult) {
       throw new Error("Battle result not found.");
     }
 
-    const battle = await getOpenBattleById(battleId);
+    const battle = await getBattleById(battleId);
+
+    console.log("<>:::::>", battle);
 
     existingResult.battleResult = battleResult;
     // If admin pass battle status I won then add amount to pass userId and change I lost status of second user
     if (battleResult === "I won") {
-      console.log(">>>>>>>>>>>>>>..")
+      console.log(">>>>>>>>>>>>>>..");
       const wallet = await WinningCash.findOne({ user: userId });
       if (battleResult == "I won") {
         wallet.balance += battle.totalPrize;
@@ -132,17 +134,26 @@ export const updateBattleResult = async (
       }
 
       // Update status of respective user
-      secondUserResult.length === 1 ? BattleResult.findOneAndUpdate({ userId: secondUserResult[0].userId, battleId, roomCode }, { $set: { battleResult: "I lost" } }) : null;
-
+      secondUserResult.length === 1
+        ? BattleResult.findOneAndUpdate(
+            { userId: secondUserResult[0].userId, battleId, roomCode },
+            { $set: { battleResult: "I lost" } }
+          )
+        : null;
     } else if (battleResult === "I lost") {
-      const wallet = secondUserResult.length === 1 ? await WinningCash.findOne({ user: secondUserResult[0].userId }) : null;
+      const wallet =
+        secondUserResult.length === 1
+          ? await WinningCash.findOne({ user: secondUserResult[0].userId })
+          : null;
       if (wallet) {
         wallet.balance += battle.totalPrize;
         await wallet.save();
       }
     } else if (battleResult === "Cancel") {
       const firstUsersWallet = await Wallet.findOne({ user: userId });
-      const secondUsersWallet = await Wallet.findOne({ user: secondUserResult[0].userId })
+      const secondUsersWallet = await Wallet.findOne({
+        user: secondUserResult[0].userId,
+      });
 
       // Fetch entry fees
       const entryFees = await OpenBattle.findOne({ roomCode });
@@ -153,8 +164,10 @@ export const updateBattleResult = async (
       await firstUsersWallet.save();
       await secondUsersWallet.save();
       // Update the first user's status
-      await BattleResult.findOneAndUpdate({ userId, battleId, roomCode }, { $set: { battleResult: "Cancel" } });
-
+      await BattleResult.findOneAndUpdate(
+        { userId, battleId, roomCode },
+        { $set: { battleResult: "Cancel" } }
+      );
     }
 
     existingResult.battleResult = battleResult;
@@ -167,7 +180,6 @@ export const updateBattleResult = async (
 
 export const getAllBattleResults = async (filter) => {
   try {
-
     if (filter === "won") {
       return await BattleResult.find({ battleResult: "I won" });
     } else if (filter === "lost") {

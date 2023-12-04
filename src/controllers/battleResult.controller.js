@@ -43,6 +43,7 @@ export const createBattleResult = async (req, res) => {
 
 export const updateBattleResultController = async (req, res) => {
   try {
+    console.log(req.body);
     const { userId, battleId, roomCode, battleResult } = req.body;
     const result = await updateBattleResult(
       userId,

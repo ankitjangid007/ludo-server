@@ -5,7 +5,7 @@ const battleResultSchema = new mongoose.Schema(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     battleId: {
       type: Schema.Types.ObjectId,
-      ref: "OpenBattle",
+      ref: "Battle",
       required: true,
     },
     roomCode: { type: String },
@@ -16,11 +16,11 @@ const battleResultSchema = new mongoose.Schema(
     },
     file: {
       type: String,
-      default: null
+      default: null,
     },
     cancellationReason: {
       type: String,
-      default: null
+      default: null,
     },
   },
   { versionKey: false, timestamps: true }
