@@ -1,3 +1,5 @@
+
+import { Types } from "mongoose";
 import { activityTags } from "../constants/activityTags.js";
 import UserActivity from "../models/userActivity.model.js";
 import {
@@ -9,18 +11,15 @@ import {
 } from "../services/battleResult.service.js";
 
 export const createBattleResult = async (req, res) => {
-  const { userId, battleId, roomCode, battleResult, file, cancellationReason } =
+  const { battleId, battleResult, file, cancellationReason } =
     req.body;
 
-  if (!userId || !battleId || !battleResult) {
-    return res.status(400).json({ message: "Missing required data" });
-  }
+  const userId = new Types.ObjectId(req.decoded.userId);
 
   try {
     const result = await battleResultService(
       userId,
       battleId,
-      roomCode,
       battleResult,
       file,
       cancellationReason

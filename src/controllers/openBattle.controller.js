@@ -264,16 +264,16 @@ export const requestToPlayController = async (req, res) => {
     const { battleId } = req.params;
     const participantId = req.decoded.userId;
     const actionOnRequest = req.body.action;
-
+    console.log(">>>>>>>>>>>>>>>>>>>", participantId, actionOnRequest)
     actionOnRequest
       ? await Battle.findByIdAndUpdate(
-          { _id: battleId },
-          { $set: { status: "Requested", participant: participantId } }
-        )
+        { _id: battleId },
+        { $set: { status: "Requested", participant: participantId } }
+      )
       : await Battle.findByIdAndUpdate(
-          { _id: battleId },
-          { $set: { status: "Created", participant: null } }
-        );
+        { _id: battleId },
+        { $set: { status: "Created", participant: null } }
+      );
 
     res
       .status(StatusCodes.OK)
@@ -294,13 +294,13 @@ export const acceptRequestOnCreatorEndController = async (req, res) => {
     // If creator reject the play request the  remove participant from request and if accept then update the status of request;
     actionOnRequest
       ? await Battle.findByIdAndUpdate(
-          { _id: battleId },
-          { $set: { status: "Requested", isRequestAccepted: true } }
-        )
+        { _id: battleId },
+        { $set: { status: "Requested", isRequestAccepted: true } }
+      )
       : await Battle.findByIdAndUpdate(
-          { _id: battleId },
-          { $set: { status: "Created", participant: null } }
-        );
+        { _id: battleId },
+        { $set: { status: "Created", participant: null } }
+      );
 
     if (actionOnRequest) {
       // Fetch the battle

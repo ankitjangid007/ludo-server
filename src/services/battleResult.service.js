@@ -10,13 +10,11 @@ import Battle from "../models/battle.model.js";
 export const battleResultService = async (
   userId,
   battleId,
-  roomCode,
   battleResult,
   file,
   cancellationReason
 ) => {
   try {
-    userId = new Types.ObjectId(userId);
 
     // Find battleInfo
     const battleInfo = await Battle.findById({ _id: battleId });
@@ -25,12 +23,13 @@ export const battleResultService = async (
 
     // If both users already submitted their results then
     if (
-      battleInfo.battleResultForCreator &&
-      battleInfo.battleResultForParticipant
+      battleInfo.battleResultForCreator !== "Pending" &&
+      battleInfo.battleResultForParticipant !== "Pending"
     ) {
       throw new Error("Both users already submitted the results");
     }
 
+    console.log("*******************", userId.equals(battleInfo.userId), userId)
     // If battle creator is going to submit the battle result
     if (userId.equals(battleInfo.userId)) {
       let fileUrl = file ? await uploadToS3(file) : null;
@@ -55,8 +54,9 @@ export const battleResultService = async (
           { $inc: { balance: battleInfo.entryFee } }
         );
       } else if (
-        battleInfo.battleResultForParticipant === "I Lost" &&
-        battleResult === "I Won"
+        (battleInfo.battleResultForParticipant === "I lost" &&
+          battleResult === "I won") || (battleInfo.battleResultForParticipant === "I won" &&
+            battleResult === "I lost")
       ) {
         // If participant submitted "I Lost" and creator is submitting "I Won" then add wining amount to creator
         // Update the battle result of creator
@@ -64,10 +64,10 @@ export const battleResultService = async (
         battleInfo.status = "Finished";
 
         // Add total amount to winner wining cash
-        WinningCash.findOneAndUpdate(
+        battleResult === "I won" ? WinningCash.findOneAndUpdate(
           { user: userId },
           { $inc: { balance: battleInfo.totalPrize } }
-        );
+        ) : null;
       } else {
         battleInfo.battleResultForCreator = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
@@ -98,8 +98,9 @@ export const battleResultService = async (
           { $inc: { balance: battleInfo.entryFee } }
         );
       } else if (
-        battleInfo.battleResultForCreator === "I Lost" &&
-        battleResult === "I Won"
+        (battleInfo.battleResultForCreator === "I lost" &&
+          battleResult === "I won") || (battleInfo.battleResultForCreator === "I won" &&
+            battleResult === "I lost")
       ) {
         // If creator submitted "I Lost" and participant is submitting "I Won" then add wining amount to participant
         // Update the battle result of participant
@@ -107,10 +108,10 @@ export const battleResultService = async (
         battleInfo.status = "Finished";
 
         // Add total amount to winner wining cash
-        WinningCash.findOneAndUpdate(
+        battleResult === "I won" ? WinningCash.findOneAndUpdate(
           { user: userId },
           { $inc: { balance: battleInfo.totalPrize } }
-        );
+        ) : null;
       } else {
         battleInfo.battleResultForParticipant = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
@@ -118,7 +119,9 @@ export const battleResultService = async (
       }
       battleInfo.fileForParticipant = file;
       await battleInfo.save();
+
     }
+    return battleInfo
   } catch (error) {
     throw new Error(error.message);
   }
@@ -172,9 +175,9 @@ export const updateBattleResult = async (
       // Update status of respective user
       secondUserResult.length === 1
         ? BattleResult.findOneAndUpdate(
-            { userId: secondUserResult[0].userId, battleId, roomCode },
-            { $set: { battleResult: "I lost" } }
-          )
+          { userId: secondUserResult[0].userId, battleId, roomCode },
+          { $set: { battleResult: "I lost" } }
+        )
         : null;
     } else if (battleResult === "I lost") {
       const wallet =
