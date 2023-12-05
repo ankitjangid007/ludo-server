@@ -185,6 +185,9 @@ export const getAllCreatedBattleService = async (userId, limit, skip) => {
                   {
                     status: "Requested",
                   },
+                  {
+                    status: "Running",
+                  },
                 ],
               },
               {
