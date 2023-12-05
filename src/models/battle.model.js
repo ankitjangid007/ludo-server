@@ -13,6 +13,7 @@ const BattleSchema = new mongoose.Schema(
             default: "Created",
         },
         participant: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+        
     },
     { versionKey: false, timestamps: true }
 );
