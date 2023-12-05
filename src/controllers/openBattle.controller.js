@@ -206,6 +206,8 @@ export const getAllCreatedBattleController = async (req, res) => {
           participantId: openBattle?.participant,
           isRequestAccepted: openBattle?.isRequestAccepted,
           participantName: openBattle?.participantInfo?.userName,
+          battleResultForCreator: openBattle?.battleResultForCreator,
+          battleResultForParticipant: openBattle?.battleResultForParticipant,
         };
       })
     );
