@@ -16,107 +16,77 @@ export const battleResultService = async (
   cancellationReason
 ) => {
   try {
+    let fileUrl = file ? await uploadToS3(file) : null;
 
-    userId = new Types.ObjectId(userId);
+    const newResult = new BattleResult({
+      userId,
+      battleId,
+      roomCode,
+      battleResult,
+      file: battleResult === "I won" ? fileUrl : undefined,
+      cancellationReason:
+        battleResult === "Cancel" ? cancellationReason : undefined,
+    });
 
-    // Find battleInfo 
-    const battleInfo = await Battle.findById({ _id: battleId });
+    const savedResult = await newResult.save();
 
-    if (!battleInfo) throw new Error("Battle not found.");
+    const battleRecords = await BattleResult.find({ battleId, roomCode });
 
-    // If both users already submitted their results then 
-    if (battleInfo.battleResultForCreator && battleInfo.battleResultForParticipant) {
-      throw new Error("Both users already submitted the results")
+    // Check if both users cancel the battle then update their wallet with respective battle price
+    if (
+      battleRecords.length === 2 &&
+      battleRecords[0].battleResult === "Cancel" &&
+      battleRecords[1].battleResult === "Cancel"
+    ) {
+      const battleInfo = await Battle.findById({ _id: battleId });
+      // Update the wallet of both the participants and change the battle status to finished
+      await Promise.all([
+        Wallet.findOneAndUpdate(
+          { user: battleRecords[0].userId },
+          { $inc: { balance: battleInfo.entryFee } }
+        ),
+        Wallet.findOneAndUpdate(
+          { user: battleRecords[1].userId },
+          { $inc: { balance: battleInfo.entryFee } }
+        ),
+        Battle.findByIdAndUpdate(
+          { _id: battleId },
+          { $set: { status: "Finished" } }
+        ),
+      ]);
     }
 
+    const wonRecord = battleRecords.find(
+      (record) => record.battleResult === "I won"
+    );
+    const lostRecord = battleRecords.find(
+      (record) => record.battleResult === "I lost"
+    );
 
-    // If battle creator is going to submit the battle result
-    if (userId.equals(battleInfo.userId)) {
-      let fileUrl = file ? await uploadToS3(file) : null;
-      // Check if participant already submitted the result and it is cancel and creator also submit the cancel status then
-      // refund the money to both users
-      if (battleInfo.battleResultForParticipant === 'Cancel' && battleResult === 'Cancel') {
-        // Update the battle result of creator
-        battleInfo.battleResultForCreator = battleResult;
-        battleInfo.cancellationReasonForCreator = cancellationReason;
-        battleInfo.status = "Finished"
-
-        // Transfer entryFee to both users
-        Wallet.findOneAndUpdate(
-          { user: userId },
-          { $inc: { balance: battleInfo.entryFee } }
-        );
-        Wallet.findOneAndUpdate(
-          { user: battleInfo.participant },
-          { $inc: { balance: battleInfo.entryFee } }
-        );
-
-      } else if (battleInfo.battleResultForParticipant === 'I Lost' && battleResult === 'I Won') {
-        // If participant submitted "I Lost" and creator is submitting "I Won" then add wining amount to creator
-        // Update the battle result of creator
-        battleInfo.battleResultForCreator = battleResult;
-        battleInfo.status = "Finished"
-
-        // Add total amount to winner wining cash
-        WinningCash.findOneAndUpdate(
-          { user: userId },
-          { $inc: { balance: battleInfo.totalPrize } }
-        );
-
-      }
-      else {
-        battleInfo.battleResultForCreator = battleResult;
-        battleInfo.cancellationReasonForCreator = cancellationReason;
-        battleInfo.status = "Issued"
-      }
-      battleInfo.fileForCreator = fileUrl
-      await battleInfo.save()
+    if (wonRecord && lostRecord) {
+      const wallet = await WinningCash.findOne({ user: wonRecord.userId });
+      const battle = await getBattleById(wonRecord.battleId);
+      Battle.findByIdAndUpdate(
+        { _id: battleId },
+        { $set: { status: "Finished" } }
+      ),
+        (wallet.balance += battle.totalPrize);
+      await wallet.save();
     }
-    // If battle participator is going to submit the battle result
-    else {
-      // Check if creator already submitted the result and it is cancel and participant also submit the cancel status then
-      // refund the money to both users
-      if (battleInfo.battleResultForCreator === 'Cancel' && battleResult === 'Cancel') {
-        // Update the battle result of creator
-        battleInfo.battleResultForParticipant = battleResult;
-        battleInfo.cancellationReasonForParticipant = cancellationReason;
 
-        // Transfer entryFee to both users
-        Wallet.findOneAndUpdate(
-          { user: userId },
-          { $inc: { balance: battleInfo.entryFee } }
-        );
-        Wallet.findOneAndUpdate(
-          { user: battleInfo.participant },
-          { $inc: { balance: battleInfo.entryFee } }
-        );
-      } else if (battleInfo.battleResultForCreator === 'I Lost' && battleResult === 'I Won') {
-        // If creator submitted "I Lost" and participant is submitting "I Won" then add wining amount to participant
-        // Update the battle result of participant
-        battleInfo.battleResultForParticipant = battleResult;
-        battleInfo.status = "Finished"
-
-        // Add total amount to winner wining cash
-        WinningCash.findOneAndUpdate(
-          { user: userId },
-          { $inc: { balance: battleInfo.totalPrize } }
-        );
-
-      }
-      else {
-        battleInfo.battleResultForParticipant = battleResult;
-        battleInfo.cancellationReasonForCreator = cancellationReason;
-        battleInfo.status = "Issued"
-      }
-      battleInfo.fileForParticipant = file
-      await battleInfo.save()
+    if (battleRecords.length === 2) {
+      Battle.findByIdAndUpdate(
+        { _id: battleId },
+        { $set: { status: "Finished" } }
+      );
     }
+
+    return savedResult;
   } catch (error) {
-    throw new Error(error.message)
+    console.log(error.message);
+    throw new Error(error.message);
   }
-
 };
-
 
 export const updateBattleResult = async (
   userId,
@@ -166,9 +136,9 @@ export const updateBattleResult = async (
       // Update status of respective user
       secondUserResult.length === 1
         ? BattleResult.findOneAndUpdate(
-          { userId: secondUserResult[0].userId, battleId, roomCode },
-          { $set: { battleResult: "I lost" } }
-        )
+            { userId: secondUserResult[0].userId, battleId, roomCode },
+            { $set: { battleResult: "I lost" } }
+          )
         : null;
     } else if (battleResult === "I lost") {
       const wallet =
