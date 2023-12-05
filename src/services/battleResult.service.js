@@ -16,30 +16,34 @@ export const battleResultService = async (
   cancellationReason
 ) => {
   try {
-
     userId = new Types.ObjectId(userId);
 
-    // Find battleInfo 
+    // Find battleInfo
     const battleInfo = await Battle.findById({ _id: battleId });
 
     if (!battleInfo) throw new Error("Battle not found.");
 
-    // If both users already submitted their results then 
-    if (battleInfo.battleResultForCreator && battleInfo.battleResultForParticipant) {
-      throw new Error("Both users already submitted the results")
+    // If both users already submitted their results then
+    if (
+      battleInfo.battleResultForCreator &&
+      battleInfo.battleResultForParticipant
+    ) {
+      throw new Error("Both users already submitted the results");
     }
-
 
     // If battle creator is going to submit the battle result
     if (userId.equals(battleInfo.userId)) {
       let fileUrl = file ? await uploadToS3(file) : null;
       // Check if participant already submitted the result and it is cancel and creator also submit the cancel status then
       // refund the money to both users
-      if (battleInfo.battleResultForParticipant === 'Cancel' && battleResult === 'Cancel') {
+      if (
+        battleInfo.battleResultForParticipant === "Cancel" &&
+        battleResult === "Cancel"
+      ) {
         // Update the battle result of creator
         battleInfo.battleResultForCreator = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
-        battleInfo.status = "Finished"
+        battleInfo.status = "Finished";
 
         // Transfer entryFee to both users
         Wallet.findOneAndUpdate(
@@ -50,33 +54,36 @@ export const battleResultService = async (
           { user: battleInfo.participant },
           { $inc: { balance: battleInfo.entryFee } }
         );
-
-      } else if (battleInfo.battleResultForParticipant === 'I Lost' && battleResult === 'I Won') {
+      } else if (
+        battleInfo.battleResultForParticipant === "I Lost" &&
+        battleResult === "I Won"
+      ) {
         // If participant submitted "I Lost" and creator is submitting "I Won" then add wining amount to creator
         // Update the battle result of creator
         battleInfo.battleResultForCreator = battleResult;
-        battleInfo.status = "Finished"
+        battleInfo.status = "Finished";
 
         // Add total amount to winner wining cash
         WinningCash.findOneAndUpdate(
           { user: userId },
           { $inc: { balance: battleInfo.totalPrize } }
         );
-
-      }
-      else {
+      } else {
         battleInfo.battleResultForCreator = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
-        battleInfo.status = "Issued"
+        battleInfo.status = "Issued";
       }
-      battleInfo.fileForCreator = fileUrl
-      await battleInfo.save()
+      battleInfo.fileForCreator = fileUrl;
+      await battleInfo.save();
     }
     // If battle participator is going to submit the battle result
     else {
       // Check if creator already submitted the result and it is cancel and participant also submit the cancel status then
       // refund the money to both users
-      if (battleInfo.battleResultForCreator === 'Cancel' && battleResult === 'Cancel') {
+      if (
+        battleInfo.battleResultForCreator === "Cancel" &&
+        battleResult === "Cancel"
+      ) {
         // Update the battle result of creator
         battleInfo.battleResultForParticipant = battleResult;
         battleInfo.cancellationReasonForParticipant = cancellationReason;
@@ -90,33 +97,32 @@ export const battleResultService = async (
           { user: battleInfo.participant },
           { $inc: { balance: battleInfo.entryFee } }
         );
-      } else if (battleInfo.battleResultForCreator === 'I Lost' && battleResult === 'I Won') {
+      } else if (
+        battleInfo.battleResultForCreator === "I Lost" &&
+        battleResult === "I Won"
+      ) {
         // If creator submitted "I Lost" and participant is submitting "I Won" then add wining amount to participant
         // Update the battle result of participant
         battleInfo.battleResultForParticipant = battleResult;
-        battleInfo.status = "Finished"
+        battleInfo.status = "Finished";
 
         // Add total amount to winner wining cash
         WinningCash.findOneAndUpdate(
           { user: userId },
           { $inc: { balance: battleInfo.totalPrize } }
         );
-
-      }
-      else {
+      } else {
         battleInfo.battleResultForParticipant = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
-        battleInfo.status = "Issued"
+        battleInfo.status = "Issued";
       }
-      battleInfo.fileForParticipant = file
-      await battleInfo.save()
+      battleInfo.fileForParticipant = file;
+      await battleInfo.save();
     }
   } catch (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
-
 };
-
 
 export const updateBattleResult = async (
   userId,
@@ -166,9 +172,9 @@ export const updateBattleResult = async (
       // Update status of respective user
       secondUserResult.length === 1
         ? BattleResult.findOneAndUpdate(
-          { userId: secondUserResult[0].userId, battleId, roomCode },
-          { $set: { battleResult: "I lost" } }
-        )
+            { userId: secondUserResult[0].userId, battleId, roomCode },
+            { $set: { battleResult: "I lost" } }
+          )
         : null;
     } else if (battleResult === "I lost") {
       const wallet =

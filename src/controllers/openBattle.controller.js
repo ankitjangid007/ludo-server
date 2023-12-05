@@ -167,6 +167,8 @@ export const createNewBattleByUserController = async (req, res) => {
     entryFee: newlyCreatedBattle?.entryFee,
     totalPrize: newlyCreatedBattle?.totalPrize,
     status: newlyCreatedBattle?.status,
+    battleResultForCreator: newlyCreatedBattle?.battleResultForCreator,
+    battleResultForParticipant: newlyCreatedBattle?.battleResultForParticipant,
   };
 
   // Emit event
@@ -203,7 +205,7 @@ export const getAllCreatedBattleController = async (req, res) => {
           status: openBattle.status,
           participantId: openBattle?.participant,
           isRequestAccepted: openBattle?.isRequestAccepted,
-          participantName: openBattle?.participantData?.userName,
+          participantName: openBattle?.participantInfo?.userName,
         };
       })
     );
