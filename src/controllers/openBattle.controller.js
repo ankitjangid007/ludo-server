@@ -298,19 +298,23 @@ export const acceptRequestOnCreatorEndController = async (req, res) => {
           { $set: { status: "Created", participant: null } }
         );
 
-    // Fetch the battle
-    const battle = await Battle.findById(battleId);
+    if (actionOnRequest) {
+      // Fetch the battle
+      const battle = await Battle.findById(battleId);
 
-    const createrWallet = await Wallet.findOne({ user: battle.userId });
-    const participantWallet = await Wallet.findOne({
-      user: battle.participant,
-    });
+      const createrWallet = await Wallet.findOne({ user: battle.userId });
+      const participantWallet = await Wallet.findOne({
+        user: battle.participant,
+      });
 
-    createrWallet.balance -= battle.entryFee;
-    participantWallet.balance -= battle.entryFee;
+      console.log(createrWallet, participantWallet);
 
-    createrWallet.save();
-    participantWallet.save();
+      createrWallet.balance -= battle.entryFee;
+      participantWallet.balance -= battle.entryFee;
+
+      createrWallet.save();
+      participantWallet.save();
+    }
 
     return res
       .status(StatusCodes.OK)
