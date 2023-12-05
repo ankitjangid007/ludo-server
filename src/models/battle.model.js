@@ -9,11 +9,25 @@ const BattleSchema = new mongoose.Schema(
         isRequestAccepted: { type: Boolean, default: false },
         status: {
             type: String,
-            enum: ["Created", "Requested", "Running"],
+            enum: ["Created", "Requested", "Running", "Finished", "Issued"],
             default: "Created",
         },
         participant: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
-        
+        battleResultForCreator: { type: String, enum: ["I won", "I lost", "Cancel"], default: null },
+        battleResultForParticipant: { type: String, enum: ["I won", "I lost", "Cancel"], default: null },
+        fileForCreator: {
+            type: String,
+            default: null,
+        },
+        fileForParticipant: { type: String, default: null },
+        cancellationReasonForCreator: {
+            type: String,
+            default: null,
+        },
+        cancellationReasonForParticipant: {
+            type: String,
+            default: null,
+        },
     },
     { versionKey: false, timestamps: true }
 );
