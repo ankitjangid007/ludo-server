@@ -42,9 +42,9 @@ export const createBattleResult = async (req, res) => {
 
 export const updateBattleResultController = async (req, res) => {
   try {
-    console.log(req.body);
+
     const { userId, battleId, roomCode, battleResult } = req.body;
-    const result = await updateBattleResult(
+    const updateBattleInfo = await updateBattleResult(
       userId,
       battleId,
       roomCode,
@@ -59,7 +59,7 @@ export const updateBattleResultController = async (req, res) => {
       requestQuery: req.query,
     });
 
-    res.status(200).json(result);
+    res.status(200).json({ success: true, message: "Battle result updated successfully", data: { updateBattleInfo } });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: "Error updating battle result" });
@@ -69,8 +69,10 @@ export const updateBattleResultController = async (req, res) => {
 export const getBattleResults = async (req, res) => {
   try {
     const { filter } = req.query;
-    const results = await getAllBattleResults(filter);
-    res.json(results);
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
+    const battleList = await getAllBattleResults(filter, limit, pageNumber);
+    res.status(200).json({ success: true, message: `All ${filter ? filter : ''}list fetched successfully`, data: { battleList } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error fetching battle results" });

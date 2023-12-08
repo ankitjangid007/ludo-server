@@ -18,6 +18,7 @@ export const battleResultService = async (
 
     // Find battleInfo
     const battleInfo = await Battle.findById({ _id: battleId });
+    userId = new Types.ObjectId(userId);
 
     if (!battleInfo) throw new Error("Battle not found.");
 
@@ -29,7 +30,6 @@ export const battleResultService = async (
       throw new Error("Both users already submitted the results");
     }
 
-    console.log("*******************", userId.equals(battleInfo.userId), userId)
     // If battle creator is going to submit the battle result
     if (userId.equals(battleInfo.userId)) {
       let fileUrl = file ? await uploadToS3(file) : null;
@@ -45,14 +45,17 @@ export const battleResultService = async (
         battleInfo.status = "Finished";
 
         // Transfer entryFee to both users
-        Wallet.findOneAndUpdate(
+        await Wallet.findOneAndUpdate(
           { user: userId },
-          { $inc: { balance: battleInfo.entryFee } }
+          { $inc: { balance: battleInfo.entryFee } },
+          { new: true }
         );
-        Wallet.findOneAndUpdate(
+        await Wallet.findOneAndUpdate(
           { user: battleInfo.participant },
-          { $inc: { balance: battleInfo.entryFee } }
+          { $inc: { balance: battleInfo.entryFee } },
+          { new: true }
         );
+
       } else if (
         (battleInfo.battleResultForParticipant === "I lost" &&
           battleResult === "I won") || (battleInfo.battleResultForParticipant === "I won" &&
@@ -64,10 +67,15 @@ export const battleResultService = async (
         battleInfo.status = "Finished";
 
         // Add total amount to winner wining cash
-        battleResult === "I won" ? WinningCash.findOneAndUpdate(
+        battleResult === "I won" ? await WinningCash.findOneAndUpdate(
           { user: userId },
-          { $inc: { balance: battleInfo.totalPrize } }
-        ) : null;
+          { $inc: { balance: battleInfo.totalPrize } },
+          { new: true }
+        ) : await WinningCash.findOneAndUpdate(
+          { user: battleInfo.participant },
+          { $inc: { balance: battleInfo.totalPrize } },
+          { new: true }
+        );
       } else {
         battleInfo.battleResultForCreator = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
@@ -80,6 +88,7 @@ export const battleResultService = async (
     else {
       // Check if creator already submitted the result and it is cancel and participant also submit the cancel status then
       // refund the money to both users
+      let fileUrl = file ? await uploadToS3(file) : null;
       if (
         battleInfo.battleResultForCreator === "Cancel" &&
         battleResult === "Cancel"
@@ -87,16 +96,19 @@ export const battleResultService = async (
         // Update the battle result of creator
         battleInfo.battleResultForParticipant = battleResult;
         battleInfo.cancellationReasonForParticipant = cancellationReason;
-
+        battleInfo.status = "Finished";
         // Transfer entryFee to both users
-        Wallet.findOneAndUpdate(
+        await Wallet.findOneAndUpdate(
           { user: userId },
           { $inc: { balance: battleInfo.entryFee } }
         );
-        Wallet.findOneAndUpdate(
-          { user: battleInfo.participant },
+        await Wallet.findOneAndUpdate(
+          { user: battleInfo.userId },
           { $inc: { balance: battleInfo.entryFee } }
         );
+
+
+
       } else if (
         (battleInfo.battleResultForCreator === "I lost" &&
           battleResult === "I won") || (battleInfo.battleResultForCreator === "I won" &&
@@ -108,16 +120,21 @@ export const battleResultService = async (
         battleInfo.status = "Finished";
 
         // Add total amount to winner wining cash
-        battleResult === "I won" ? WinningCash.findOneAndUpdate(
+        battleResult === "I won" ? await WinningCash.findOneAndUpdate(
           { user: userId },
-          { $inc: { balance: battleInfo.totalPrize } }
-        ) : null;
+          { $inc: { balance: battleInfo.totalPrize } },
+          { new: true }
+        ) : await WinningCash.findOneAndUpdate(
+          { user: battleInfo.userId },
+          { $inc: { balance: battleInfo.totalPrize } },
+          { new: true }
+        );
       } else {
         battleInfo.battleResultForParticipant = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
         battleInfo.status = "Issued";
       }
-      battleInfo.fileForParticipant = file;
+      battleInfo.fileForParticipant = fileUrl;
       await battleInfo.save();
 
     }
@@ -134,149 +151,95 @@ export const updateBattleResult = async (
   battleResult
 ) => {
   try {
-    // Find the existing document to update
-    const existingResult = await BattleResult.findOne({
-      userId,
-      battleId,
-      roomCode,
-    });
+    battleId = new Types.ObjectId(battleId);
+    userId = new Types.ObjectId(userId);
+    const battleInfo = await Battle.findById({ _id: battleId });
 
-    // Find second user's result
-    const secondUserResult = await BattleResult.aggregate([
-      {
-        $match: {
-          userId: {
-            $ne: new Types.ObjectId(userId),
-          },
-          battleId: new Types.ObjectId(battleId),
-          roomCode: roomCode,
-        },
-      },
-    ]);
-
-    if (!existingResult) {
-      throw new Error("Battle result not found.");
+    if (battleInfo.status !== 'Issued') {
+      throw new Error("This battle already checked by admin")
     }
 
-    const battle = await getBattleById(battleId);
-
-    console.log("<>:::::>", battle);
-
-    existingResult.battleResult = battleResult;
-    // If admin pass battle status I won then add amount to pass userId and change I lost status of second user
-    if (battleResult === "I won") {
-      console.log(">>>>>>>>>>>>>>..");
-      const wallet = await WinningCash.findOne({ user: userId });
-      if (battleResult == "I won") {
-        wallet.balance += battle.totalPrize;
-        await wallet.save();
-      }
-
-      // Update status of respective user
-      secondUserResult.length === 1
-        ? BattleResult.findOneAndUpdate(
-          { userId: secondUserResult[0].userId, battleId, roomCode },
-          { $set: { battleResult: "I lost" } }
-        )
-        : null;
-    } else if (battleResult === "I lost") {
-      const wallet =
-        secondUserResult.length === 1
-          ? await WinningCash.findOne({ user: secondUserResult[0].userId })
-          : null;
-      if (wallet) {
-        wallet.balance += battle.totalPrize;
-        await wallet.save();
-      }
-    } else if (battleResult === "Cancel") {
-      const firstUsersWallet = await Wallet.findOne({ user: userId });
-      const secondUsersWallet = await Wallet.findOne({
-        user: secondUserResult[0].userId,
-      });
-
-      // Fetch entry fees
-      const entryFees = await Battle.findOne({ roomCode });
-
-      // Update their main wallet
-      firstUsersWallet.balance += entryFees.entryFee;
-      secondUsersWallet.balance += entryFees.entryFee;
-      await firstUsersWallet.save();
-      await secondUsersWallet.save();
-      // Update the first user's status
-      await BattleResult.findOneAndUpdate(
-        { userId, battleId, roomCode },
-        { $set: { battleResult: "Cancel" } }
+    // Admin wants to cancel both battles to changes status of both to cancel along with update their wallet 
+    if (battleResult === 'Cancel') {
+      // Transfer entryFee to both users
+      await Wallet.findOneAndUpdate(
+        { user: userId },
+        { $inc: { balance: battleInfo.entryFee } }
       );
+      await Wallet.findOneAndUpdate(
+        { user: battleInfo.participant },
+        { $inc: { balance: battleInfo.entryFee } }
+      );
+      battleInfo.battleResultForCreator = "Cancel";
+      battleInfo.battleResultForParticipant = "Cancel";
+    }
+    // If admin wants to won a particular user the  update the winning wallet 
+    else {
+
+      await WinningCash.findOneAndUpdate(
+        { user: userId },
+        { $inc: { balance: battleInfo.totalPrize } },
+        { new: true });
+      // Update won status of upcoming user's Id
+      if (battleInfo.participant.equals(userId)) {
+        battleInfo.battleResultForParticipant = "I won";
+        battleInfo.battleResultForCreator = "I lost";
+      } else {
+        battleInfo.battleResultForParticipant = "I lost";
+        battleInfo.battleResultForCreator = "I won";
+      }
+
     }
 
-    existingResult.battleResult = battleResult;
-    existingResult.save();
-    return existingResult;
+    battleInfo.status = "Finished";
+
+    await battleInfo.save();
+
+    return battleInfo;
+
   } catch (error) {
-    throw new Error(error.message);
+    throw new Error(error.message)
   }
-};
+}
 
-export const getAllBattleResults = async (filter) => {
+export const getAllBattleResults = async (filter, limit, pageNumber) => {
   try {
-    if (filter === "won") {
-      return await BattleResult.find({ battleResult: "I won" });
-    } else if (filter === "lost") {
-      return await BattleResult.find({ battleResult: "I lost" });
-    } else if (filter === "cancelled") {
-      return await BattleResult.find({ battleResult: "Cancel" });
-    } else if (filter === "issued") {
-      const result = await BattleResult.aggregate([
-        {
-          $group: {
-            _id: {
-              battleId: "$battleId",
-              roomCode: "$roomCode",
-            },
-            documents: {
-              $push: "$$ROOT",
-            },
-          },
-        },
-        {
-          $unwind: {
-            path: "$documents",
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "documents.userId",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $group: {
-            _id: "$_id",
-            documents: {
-              $push: {
-                $mergeObjects: [
-                  "$documents",
-                  {
-                    user: {
-                      $arrayElemAt: ["$user", 0],
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      ]);
 
-      const finalResult = await resultFilter(result);
+    const skip = limit * (pageNumber - 1)
+    const finalResult = await Battle.aggregate([
+      {
+        '$match': filter ? { status: filter } : {}
+      }, {
+        '$lookup': {
+          'from': 'users',
+          'localField': 'userId',
+          'foreignField': '_id',
+          'as': 'creatorInfo'
+        }
+      }, {
+        '$lookup': {
+          'from': 'users',
+          'localField': 'participant',
+          'foreignField': '_id',
+          'as': 'participantInfo'
+        }
+      }, {
+        '$unwind': {
+          'path': '$creatorInfo'
+        }
+      }, {
+        '$unwind': {
+          'path': '$participantInfo'
+        }
+      }, {
+        $skip: skip
+      }, {
+        $limit: limit
+      }
+    ])
 
-      // Filter the result
-      return finalResult;
-    } else {
-      return await BattleResult.find();
-    }
+    return finalResult;
+
   } catch (error) {
     throw new Error(error.message);
   }
