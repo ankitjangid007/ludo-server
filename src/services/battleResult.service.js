@@ -231,7 +231,13 @@ export const getAllBattleResults = async (filter, limit, pageNumber) => {
         '$unwind': {
           'path': '$participantInfo'
         }
-      }, {
+      },
+      {
+        $sort: {
+          createdAt: -1
+        }
+      }
+      , {
         $skip: skip
       }, {
         $limit: limit
