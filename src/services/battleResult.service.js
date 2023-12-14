@@ -1,11 +1,10 @@
 import { Types } from "mongoose";
-import BattleResult from "../models/battleResult.model.js";
 import Wallet from "../models/wallet.model.js";
 import WinningCash from "../models/winningCash.model.js";
 import { uploadToS3 } from "../utils/fileUploder.js";
-import { resultFilter } from "../utils/resultFilter.js";
-import { getBattleById, getOpenBattleById } from "./openBattle.service.js";
 import Battle from "../models/battle.model.js";
+import ReferralInfo from "../models/referral.model.js";
+import ReferralWallet from "../models/referralWallet.model.js";
 
 export const battleResultService = async (
   userId,
@@ -76,6 +75,16 @@ export const battleResultService = async (
           { $inc: { balance: battleInfo.totalPrize } },
           { new: true }
         );
+
+        // If this user associated with another user as referral then add 2% amount to parent user
+        const referralInfo = "I won" ? await ReferralInfo.findOne({ userId }) : await ReferralInfo.findOne({ userId: battleInfo.participant });
+        if (referralInfo) {
+          // Add 2% of totalPrize in referralAmount
+          referralInfo.referralAmount = referralInfo.referralAmount + battleInfo.totalPrize * 0.02;
+          await ReferralWallet.findOneAndUpdate({ userId: referralInfo.referralId }, { $inc: { referralAmount: battleInfo.totalPrize * 0.02 } });
+          await referralInfo.save()
+        }
+
       } else {
         battleInfo.battleResultForCreator = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
@@ -129,6 +138,17 @@ export const battleResultService = async (
           { $inc: { balance: battleInfo.totalPrize } },
           { new: true }
         );
+
+        // If this user associated with another user as referral then add 2% amount to parent user
+        const referralInfo = "I won" ? await ReferralInfo.findOne({ userId }) : await ReferralInfo.findOne({ userId: battleInfo.userId });
+        if (referralInfo) {
+          // Add 2% of totalPrize in referralAmount
+          referralInfo.referralAmount = referralInfo.referralAmount + battleInfo.totalPrize * 0.02;
+          await ReferralWallet.findOneAndUpdate({ userId: referralInfo.referralId }, { $inc: { referralAmount: battleInfo.totalPrize * 0.02 } });
+          await referralInfo.save()
+        }
+
+
       } else {
         battleInfo.battleResultForParticipant = battleResult;
         battleInfo.cancellationReasonForCreator = cancellationReason;
@@ -184,9 +204,28 @@ export const updateBattleResult = async (
       if (battleInfo.participant.equals(userId)) {
         battleInfo.battleResultForParticipant = "I won";
         battleInfo.battleResultForCreator = "I lost";
+
+        // If this user associated with another user as referral then add 2% amount to parent user
+        const referralInfo = await ReferralInfo.findOne({ userId: battleInfo.participant });
+        if (referralInfo) {
+          // Add 2% of totalPrize in referralAmount
+          referralInfo.referralAmount = referralInfo.referralAmount + battleInfo.totalPrize * 0.02;
+          await ReferralWallet.findOneAndUpdate({ userId: referralInfo.referralId }, { $inc: { referralAmount: battleInfo.totalPrize * 0.02 } });
+          await referralInfo.save()
+        }
+
+
       } else {
         battleInfo.battleResultForParticipant = "I lost";
         battleInfo.battleResultForCreator = "I won";
+        // If this user associated with another user as referral then add 2% amount to parent user
+        const referralInfo = await ReferralInfo.findOne({ userId: battleInfo.userId });
+        if (referralInfo) {
+          // Add 2% of totalPrize in referralAmount
+          referralInfo.referralAmount = referralInfo.referralAmount + battleInfo.totalPrize * 0.02;
+          await ReferralWallet.findOneAndUpdate({ userId: referralInfo.referralId }, { $inc: { referralAmount: battleInfo.totalPrize * 0.02 } });
+          await referralInfo.save()
+        }
       }
 
     }

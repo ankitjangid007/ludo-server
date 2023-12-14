@@ -1,5 +1,4 @@
 import { Types } from "mongoose";
-import OpenBattle from "../models/openBattle.model.js";
 import { getUserById } from "./user.service.js";
 import Wallet from "../models/wallet.model.js";
 import Battle from "../models/battle.model.js";

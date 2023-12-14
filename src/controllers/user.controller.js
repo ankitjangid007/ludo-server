@@ -5,10 +5,15 @@ import { getAllUsers } from "../services/user.service.js";
 import UserActivity from "../models/userActivity.model.js";
 import { Types } from "mongoose";
 import { activityTags } from "../constants/activityTags.js";
+import Wallet from "../models/wallet.model.js";
+import WinningCash from "../models/winningCash.model.js";
+import ReferralWallet from "../models/referralWallet.model.js";
+import ReferralInfo from "../models/referral.model.js";
 
 // Controller to create a new user
 export const createUserOrLogin = async (req, res) => {
   const { mobileNumber } = req.body;
+  const { referralId } = req.query
 
   try {
     const existingUser = await User.findOne({ mobileNumber });
@@ -22,6 +27,16 @@ export const createUserOrLogin = async (req, res) => {
       // Create a new user if the mobile number is not found in the database
       const newUser = new User(req.body);
       const user = await newUser.save();
+
+      // Also create wallets 
+      await Wallet.create({ user: user._id });
+      await WinningCash.create({ user: user._id });
+      await ReferralWallet.create({ userId: user._id });
+
+      // If referralId is coming then create referralInfo record in database
+      if (referralId) {
+        await ReferralInfo.create({ referralId, userId: user._id });
+      }
 
       // Generate a token for the newly created user and send it to the client
       const token = generateToken(user);

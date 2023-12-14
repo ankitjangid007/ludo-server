@@ -4,9 +4,6 @@ import {
   deleteAcceptRequest,
   getAcceptRequestService,
 } from "../../services/temp/acceptRequest.service.js";
-import UserActivity from "../../models/userActivity.model.js";
-import { activityTags } from "../../constants/activityTags.js";
-import OpenBattle from "../../models/openBattle.model.js";
 import Battle from "../../models/battle.model.js";
 
 export const accpetRequestController = async (req, res) => {
@@ -60,13 +57,13 @@ export const requestToPalyController = async (req, res) => {
 
     (await actionOnRequest)
       ? Battle.findByIdAndUpdate(
-          { _id: battleId },
-          { $set: { status: "Requested", participant: participantId } }
-        )
+        { _id: battleId },
+        { $set: { status: "Requested", participant: participantId } }
+      )
       : Battle.findByIdAndUpdate(
-          { _id: battleId },
-          { $set: { status: "Created", participant: null } }
-        );
+        { _id: battleId },
+        { $set: { status: "Created", participant: null } }
+      );
 
     res
       .status(StatusCodes.OK)
@@ -87,13 +84,13 @@ export const acceptRequestOnCreatorEndController = async (req, res) => {
     // If creator reject the play request the  remove participant from request and if accept then update the status of request;
     (await actionOnRequest)
       ? Battle.findByIdAndUpdate(
-          { _id: battleId },
-          { $set: { status: "Requested", isRequestAccepted: true } }
-        )
+        { _id: battleId },
+        { $set: { status: "Requested", isRequestAccepted: true } }
+      )
       : Battle.findByIdAndUpdate(
-          { _id: battleId },
-          { $set: { status: "Requested", participant: null } }
-        );
+        { _id: battleId },
+        { $set: { status: "Requested", participant: null } }
+      );
     return res
       .status(StatusCodes.OK)
       .json({ message: "Battle request accepted successfully" });

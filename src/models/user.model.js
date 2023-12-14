@@ -2,12 +2,9 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    userName: { type: String },
-    mobileNumber: { type: String },
-    password: String,
+    userName: { type: String, default: null },
+    mobileNumber: { type: String, required: true, unique: true },
     role: { type: String, enum: ["user", "admin"] },
-    displayPicture: String,
-    aadharCardNumber: String,
   },
   { versionKey: false, timestamps: true }
 );

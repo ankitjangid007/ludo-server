@@ -9,7 +9,6 @@ export const createWallet = async (userId) => {
       const newWallet = new Wallet({ user: userId });
       await newWallet.save();
       return { wallet: newWallet, isNew: true }
-
     }
 
     return { wallet: existingWallet, isNew: false };
