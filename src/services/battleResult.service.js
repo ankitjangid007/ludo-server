@@ -268,7 +268,8 @@ export const getAllBattleResults = async (filter, limit, pageNumber) => {
         }
       }, {
         '$unwind': {
-          'path': '$participantInfo'
+          'path': '$participantInfo',
+          "preserveNullAndEmptyArrays": true
         }
       },
       {
@@ -290,11 +291,88 @@ export const getAllBattleResults = async (filter, limit, pageNumber) => {
   }
 };
 
-export const getBattleResultsByUserId = async (userId) => {
+export const getBattleResultsByUserId = async (userId, limit, pageNumber) => {
   try {
-    const results = await BattleResult.find({ userId });
+    const skip = limit * (pageNumber - 1)
+    const info = await Battle.aggregate([{ $match: { $and: [{ $or: [{ userId }, { participant: userId }] }, { status: 'Finished' }] } }, {
+      '$lookup': {
+        'from': 'users',
+        'localField': 'userId',
+        'foreignField': '_id',
+        'as': 'creatorInfo'
+      }
+    }, {
+      '$lookup': {
+        'from': 'users',
+        'localField': 'participant',
+        'foreignField': '_id',
+        'as': 'participantInfo'
+      }
+    }, {
+      '$unwind': {
+        'path': '$creatorInfo'
+      }
+    }, {
+      '$unwind': {
+        'path': '$participantInfo',
+        "preserveNullAndEmptyArrays": true
+      }
+    },
+    {
+      $sort: {
+        createdAt: -1
+      }
+    }
+      , {
+      $skip: skip
+    }, {
+      $limit: limit
+    }])
 
-    return results;
+    const outputArray = [];
+    for (let i = 0; i < info.length; i++) {
+      if (info[i].userId.equals(userId)) {
+        if (info[i].battleResultForCreator === 'I won') {
+          outputArray.push({
+            userName: info[i].creatorInfo.userName,
+            status: info[i].battleResultForCreator,
+            amount: info[i].totalPrize,
+            participantName: info[i].participantInfo.userName,
+            createdAt: info[i].createdAt
+          })
+        } else {
+          outputArray.push({
+            userName: info[i].creatorInfo.userName,
+            status: info[i].battleResultForCreator,
+            amount: info[i].entryFee,
+            participantName: info[i].participantInfo.userName,
+            createdAt: info[i].createdAt
+          })
+        }
+      } else {
+        if (info[i].battleResultForCreator === 'I won') {
+          outputArray.push({
+            userName: info[i].participantInfo.userName,
+            status: info[i].battleResultForParticipant,
+            amount: info[i].totalPrize,
+            participantName: info[i].creatorInfo.userName,
+            createdAt: info[i].createdAt
+          })
+        } else {
+          outputArray.push({
+            userName: info[i].participantInfo.userName,
+            status: info[i].battleResultForParticipant,
+            amount: info[i].entryFee,
+            participantName: info[i].creatorInfo.userName,
+            createdAt: info[i].createdAt
+          })
+        }
+      }
+
+    }
+
+    return outputArray
+
   } catch (error) {
     throw new Error(error.message);
   }

@@ -19,14 +19,14 @@ router.patch("/update", verifyToken, updateBattleResultController);
 // Get all battle results
 router.get("/", verifyToken, getBattleResults);
 
-// Get battle by userId
-router.get("/:userId", verifyToken, getBattleResultsByUserController);
-
 // Get battle by battleId
 router.get(
   "/byBattleId/:battleId",
   verifyToken,
   getBattleResultsByBattleController
 );
+
+// Fetch my all battle 
+router.get("/myBattles", verifyToken, getBattleResultsByUserController)
 
 export default router;

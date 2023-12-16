@@ -81,8 +81,10 @@ export const getBattleResults = async (req, res) => {
 
 export const getBattleResultsByUserController = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const battles = await getBattleResultsByUserId(userId);
+    const userId = new Types.ObjectId(req.decoded.userId);
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const pageNumber = req.query.pageNumber ? Number(req.query.pageNumber) : 1;
+    const battles = await getBattleResultsByUserId(userId,limit,pageNumber);
     res.status(200).json(battles);
   } catch (error) {
     res.status(500).json({ message: "Error fetching battle results" });

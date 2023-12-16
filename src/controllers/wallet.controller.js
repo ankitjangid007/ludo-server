@@ -1,24 +1,9 @@
 import { activityTags } from "../constants/activityTags.js";
 import UserActivity from "../models/userActivity.model.js";
 import {
-  createWallet,
   updateWallet,
   getWalletByUserId,
 } from "../services/wallet.service.js";
-
-// Controller to create a wallet for a user
-export const createWalletForUser = async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const { wallet, isNew } = await createWallet(userId);
-    console.log(isNew)
-    // Activity log 
-    isNew ? UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.WALLET_CREATED, requestBody: req.body, requestParams: req.params, requestQuery: req.query }) : null
-    return res.status(201).json(wallet);
-  } catch (error) {
-    return res.status(400).json({ error: error.message });
-  }
-};
 
 // Controller to get wallet by user ID
 export const getWallet = async (req, res) => {

@@ -1,21 +1,5 @@
 import Wallet from "../models/wallet.model.js";
 
-// Service to create a wallet for a user
-export const createWallet = async (userId) => {
-  try {
-    const existingWallet = await Wallet.findOne({ user: userId });
-
-    if (!existingWallet) {
-      const newWallet = new Wallet({ user: userId });
-      await newWallet.save();
-      return { wallet: newWallet, isNew: true }
-    }
-
-    return { wallet: existingWallet, isNew: false };
-  } catch (error) {
-    throw new Error("Could not create wallet: " + error.message);
-  }
-};
 
 // Service to get wallet by user ID
 export const getWalletByUserId = async (userId) => {

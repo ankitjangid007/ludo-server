@@ -19,21 +19,30 @@ import { activityTags } from "../constants/activityTags.js";
 import Battle from "../models/battle.model.js";
 import Wallet from "../models/wallet.model.js";
 
-// Controller to create an open battle
-export const createOpenBattleController = async (req, res) => {
+// <-------------------------------------------New Apis controller for battle ( Ajay )----------------------------------->
+// Create new battle by user
+export const createNewBattleByUserController = async (req, res) => {
   try {
-    const openBattle = await createOpenBattle(req.body);
-    const { userId } = req.body;
-    const userData = await getUserById(userId);
+    const battleInfo = req.body;
+    const userId = req.decoded.userId;
+    const newlyCreatedBattle = await createNewBattleByUserService(
+      userId,
+      battleInfo
+    );
+
+    const userData = await getUserById(req.decoded.userId);
     const responseObj = {
       userId: userData?._id,
       userName: userData?.userName,
-      battleId: openBattle?._id,
-      entryFee: openBattle?.entryFee,
-      totalPrize: openBattle?.totalPrize,
-      status: openBattle?.status,
+      battleId: newlyCreatedBattle?._id,
+      entryFee: newlyCreatedBattle?.entryFee,
+      totalPrize: newlyCreatedBattle?.totalPrize,
+      status: newlyCreatedBattle?.status,
+      battleResultForCreator: newlyCreatedBattle?.battleResultForCreator,
+      battleResultForParticipant: newlyCreatedBattle?.battleResultForParticipant,
     };
 
+    // Emit event
     io.emit("new-open-bet", responseObj);
 
     // Activity log
@@ -44,145 +53,10 @@ export const createOpenBattleController = async (req, res) => {
       requestParams: req.params,
       requestQuery: req.query,
     });
-    res.status(StatusCodes.CREATED).json(openBattle);
+    res.status(StatusCodes.CREATED).json(newlyCreatedBattle);
   } catch (error) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: error.message });
+    return res.status(500).json({ error: error.message })
   }
-};
-
-export const getAllBattleByStatusController = async (req, res) => {
-  try {
-    const battleStatus = req.query.battleStatus
-      ? req.query.battleStatus
-      : "Open";
-    const pageNumber = req.query.skip ? Number(req.query.pageNumber) : 0;
-    const limit = req.query.limit ? Number(req.query.limit) : 10;
-
-    const openBattles = await getBattlesByStatus(
-      battleStatus,
-      pageNumber,
-      limit
-    );
-
-    res.status(200).json(openBattles);
-  } catch (error) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: error.message });
-  }
-};
-
-// Controller to get all open battle
-export const getAllOpenBattle = async (req, res) => {
-  try {
-    const openBattles = await getOpenBattles();
-
-    const responseArray = await Promise.all(
-      openBattles.map(async (openBattle) => {
-        const userData = await getUserById(openBattle.userId);
-        const participantData = await getUserById(openBattle.participant);
-
-        return {
-          userId: userData?._id,
-          userName: userData?.userName,
-          battleId: openBattle._id,
-          entryFee: openBattle.entryFee,
-          totalPrize: openBattle.totalPrize,
-          status: openBattle.status,
-          participantId: openBattle.participant,
-          participantName: participantData?.userName,
-        };
-      })
-    );
-
-    io.emit("fetch-open-battle", responseArray);
-
-    res.status(200).json(openBattles);
-  } catch (error) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: error.message });
-  }
-};
-
-// Controller to get an open battle by ID
-export const getOpenBattleByIdController = async (req, res) => {
-  try {
-    const openBattle = await getOpenBattleById(req.params.openBattleId);
-    if (openBattle) {
-      res.status(StatusCodes.OK).json(openBattle);
-    } else {
-      res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ error: "Open battle not found" });
-    }
-  } catch (error) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: error.message });
-  }
-};
-
-// Controller to join an open battle
-export const addParticipantController = async (req, res) => {
-  try {
-    const { battleId } = req.params;
-    const { requestedFrom } = req.body;
-
-    const updatedOpenBattle = await addBattleParticipant(
-      battleId,
-      requestedFrom
-    );
-    // Activity log
-    UserActivity.create({
-      userId: req.decoded.userId,
-      activityTag: activityTags.BATTLE_JOINED,
-      requestBody: req.body,
-      requestParams: req.params,
-      requestQuery: req.query,
-    });
-    res.json(updatedOpenBattle);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-// <-------------------------------------------New Apis controller for battle ( Ajay )----------------------------------->
-// Create new battle by user
-export const createNewBattleByUserController = async (req, res) => {
-  const battleInfo = req.body;
-  const userId = req.decoded.userId;
-  const newlyCreatedBattle = await createNewBattleByUserService(
-    userId,
-    battleInfo
-  );
-
-  const userData = await getUserById(req.decoded.userId);
-  const responseObj = {
-    userId: userData?._id,
-    userName: userData?.userName,
-    battleId: newlyCreatedBattle?._id,
-    entryFee: newlyCreatedBattle?.entryFee,
-    totalPrize: newlyCreatedBattle?.totalPrize,
-    status: newlyCreatedBattle?.status,
-    battleResultForCreator: newlyCreatedBattle?.battleResultForCreator,
-    battleResultForParticipant: newlyCreatedBattle?.battleResultForParticipant,
-  };
-
-  // Emit event
-  io.emit("new-open-bet", responseObj);
-
-  // Activity log
-  UserActivity.create({
-    userId: req.decoded.userId,
-    activityTag: activityTags.BATTLE_ADDED,
-    requestBody: req.body,
-    requestParams: req.params,
-    requestQuery: req.query,
-  });
-  res.status(StatusCodes.CREATED).json(newlyCreatedBattle);
 };
 
 // Get all created battle for all online users
@@ -264,7 +138,23 @@ export const requestToPlayController = async (req, res) => {
     const { battleId } = req.params;
     const participantId = req.decoded.userId;
     const actionOnRequest = req.body.action;
-    console.log(">>>>>>>>>>>>>>>>>>>", participantId, actionOnRequest)
+
+    const isBattle = await Battle.findById({ _id: battleId });
+
+    if (!isBattle) {
+      throw new Error("Sorry, This battle not present")
+    }
+
+    if (actionOnRequest) {
+      // If user don't have sufficient amount to create new wallet then throw error
+      const isSufficientAmountPresent = await Wallet.findOne({ user: participantId, balance: { $gte: isBattle.entryFee } });
+      if (!isSufficientAmountPresent) {
+        throw new Error("No sufficient amount present in user wallet, Please add more amount to play battle")
+      }
+
+    }
+
+
     actionOnRequest
       ? await Battle.findByIdAndUpdate(
         { _id: battleId },

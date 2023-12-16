@@ -154,6 +154,12 @@ export const createNewBattleByUserService = async (userId, battleInfo) => {
   try {
     const { entryFee } = battleInfo;
 
+    // If user don't have sufficient amount to create new wallet then throw error
+    const isSufficientAmountPresent = await Wallet.findOne({ user: userId, balance: { $gte: entryFee } });
+    if (!isSufficientAmountPresent) {
+      throw new Error("No sufficient amount present in user wallet, Please add more amount to play battle")
+    }
+
     const totalPrize = Math.floor(entryFee * 2 * 0.95); // Double the entryFee and apply a 5% commission
 
     // Add new battle in database
@@ -239,12 +245,6 @@ export const getAllCreatedBattleService = async (userId, limit, skip) => {
             createdAt: -1,
           },
         },
-        // {
-        //   $skip: skip,
-        // },
-        // {
-        //   $limit: limit,
-        // },
       ]);
     } catch (error) {
       throw new Error("Could not get requested battles" + error.message);
