@@ -28,12 +28,23 @@ export const getAllUsers = async () => {
           'as': 'winningInfo'
         }
       }, {
+        '$lookup': {
+          'from': 'referralwallets',
+          'localField': '_id',
+          'foreignField': 'userId',
+          'as': 'referralInfo'
+        }
+      }, {
         '$unwind': {
           'path': '$walletInfo'
         }
       }, {
         '$unwind': {
           'path': '$winningInfo'
+        }
+      }, {
+        '$unwind': {
+          'path': '$referralInfo'
         }
       }
     ]);

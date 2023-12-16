@@ -12,7 +12,20 @@ export const createPayment = async (paymentData) => {
 
 export const getPayment = async () => {
   try {
-    return await Payment.find();
+    return await Payment.aggregate([
+      {
+        '$lookup': {
+          'from': 'users',
+          'localField': 'userId',
+          'foreignField': '_id',
+          'as': 'userInfo'
+        }
+      }, {
+        '$unwind': {
+          'path': '$userInfo'
+        }
+      }
+    ]);
   } catch (error) {
     throw new Error("Couldn't get payment");
   }

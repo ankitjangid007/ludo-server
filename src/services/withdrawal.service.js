@@ -12,7 +12,20 @@ export const createWithdrawal = async (paymentData) => {
 
 export const getWithdrawal = async () => {
   try {
-    return await Withdrawal.find();
+    return await Withdrawal.aggregate([
+      {
+        '$lookup': {
+          'from': 'users',
+          'localField': 'userId',
+          'foreignField': '_id',
+          'as': 'userInfo'
+        }
+      }, {
+        '$unwind': {
+          'path': '$userInfo'
+        }
+      }
+    ]);
   } catch (error) {
     throw new Error("Couldn't get Withdrawal request");
   }
