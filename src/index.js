@@ -18,7 +18,8 @@ import battleResultRoutes from "./routes/battleResult.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import withdrawalRoutes from "./routes/withdrawal.route.js";
 import tempRoutes from "./routes/temp/temp.route.js";
-import activities from "./routes/activity.route.js"
+import activities from "./routes/activity.route.js";
+import referrals from "./routes/referral.route.js";
 
 dotenv.config();
 const app = express();
@@ -38,6 +39,7 @@ app.use("/payment", paymentRoutes);
 app.use("/withdrawal", withdrawalRoutes);
 app.use("/temp", tempRoutes);
 app.use("/activities", activities)
+app.use("/referrals",referrals)
 
 const server = http.createServer(app);
 

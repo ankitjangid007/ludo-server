@@ -80,7 +80,7 @@ export const battleResultService = async (
         const referralInfo = "I won" ? await ReferralInfo.findOne({ userId }) : await ReferralInfo.findOne({ userId: battleInfo.participant });
         if (referralInfo) {
           // Add 2% of totalPrize in referralAmount
-          referralInfo.referralAmount = referralInfo.referralAmount + battleInfo.totalPrize * 0.02;
+          referralInfo.referralAmount = (referralInfo.referralAmount + battleInfo.totalPrize * 0.02).toFixed(2);
           await ReferralWallet.findOneAndUpdate({ userId: referralInfo.referralId }, { $inc: { referralAmount: battleInfo.totalPrize * 0.02 } });
           await referralInfo.save()
         }
@@ -143,7 +143,7 @@ export const battleResultService = async (
         const referralInfo = "I won" ? await ReferralInfo.findOne({ userId }) : await ReferralInfo.findOne({ userId: battleInfo.userId });
         if (referralInfo) {
           // Add 2% of totalPrize in referralAmount
-          referralInfo.referralAmount = referralInfo.referralAmount + battleInfo.totalPrize * 0.02;
+          referralInfo.referralAmount = (referralInfo.referralAmount + battleInfo.totalPrize * 0.02).toFixed(2);
           await ReferralWallet.findOneAndUpdate({ userId: referralInfo.referralId }, { $inc: { referralAmount: battleInfo.totalPrize * 0.02 } });
           await referralInfo.save()
         }
@@ -209,7 +209,7 @@ export const updateBattleResult = async (
         const referralInfo = await ReferralInfo.findOne({ userId: battleInfo.participant });
         if (referralInfo) {
           // Add 2% of totalPrize in referralAmount
-          referralInfo.referralAmount = referralInfo.referralAmount + battleInfo.totalPrize * 0.02;
+          referralInfo.referralAmount = (referralInfo.referralAmount + battleInfo.totalPrize * 0.02).toFixed(2);
           await ReferralWallet.findOneAndUpdate({ userId: referralInfo.referralId }, { $inc: { referralAmount: battleInfo.totalPrize * 0.02 } });
           await referralInfo.save()
         }
@@ -222,7 +222,7 @@ export const updateBattleResult = async (
         const referralInfo = await ReferralInfo.findOne({ userId: battleInfo.userId });
         if (referralInfo) {
           // Add 2% of totalPrize in referralAmount
-          referralInfo.referralAmount = referralInfo.referralAmount + battleInfo.totalPrize * 0.02;
+          referralInfo.referralAmount = (referralInfo.referralAmount + battleInfo.totalPrize * 0.02).toFixed(2);
           await ReferralWallet.findOneAndUpdate({ userId: referralInfo.referralId }, { $inc: { referralAmount: battleInfo.totalPrize * 0.02 } });
           await referralInfo.save()
         }
@@ -338,7 +338,8 @@ export const getBattleResultsByUserId = async (userId, limit, pageNumber) => {
             status: info[i].battleResultForCreator,
             amount: info[i].totalPrize,
             participantName: info[i].participantInfo.userName,
-            createdAt: info[i].createdAt
+            createdAt: info[i].createdAt,
+            battleId:info[i]._id
           })
         } else {
           outputArray.push({
@@ -346,7 +347,8 @@ export const getBattleResultsByUserId = async (userId, limit, pageNumber) => {
             status: info[i].battleResultForCreator,
             amount: info[i].entryFee,
             participantName: info[i].participantInfo.userName,
-            createdAt: info[i].createdAt
+            createdAt: info[i].createdAt,
+            battleId:info[i]._id
           })
         }
       } else {
@@ -356,7 +358,8 @@ export const getBattleResultsByUserId = async (userId, limit, pageNumber) => {
             status: info[i].battleResultForParticipant,
             amount: info[i].totalPrize,
             participantName: info[i].creatorInfo.userName,
-            createdAt: info[i].createdAt
+            createdAt: info[i].createdAt,
+            battleId:info[i]._id
           })
         } else {
           outputArray.push({
@@ -364,7 +367,8 @@ export const getBattleResultsByUserId = async (userId, limit, pageNumber) => {
             status: info[i].battleResultForParticipant,
             amount: info[i].entryFee,
             participantName: info[i].creatorInfo.userName,
-            createdAt: info[i].createdAt
+            createdAt: info[i].createdAt,
+            battleId:info[i]._id
           })
         }
       }

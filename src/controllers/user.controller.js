@@ -15,10 +15,15 @@ export const createUserOrLogin = async (req, res) => {
   const { mobileNumber } = req.body;
   const { referralId } = req.query
 
-  console.log(">>>>>>>>>>>>>>>>>", mobileNumber)
-
   try {
     const existingUser = await User.findOne({ mobileNumber });
+
+    if (referralId) {
+      const isReferralUser = await User.findById({ _id: referralId });
+      if (!isReferralUser) {
+        return res.status(400).json({ message: "Invalid referralId" })
+      }
+    }
 
     if (existingUser) {
       const token = generateToken(existingUser);
@@ -26,7 +31,7 @@ export const createUserOrLogin = async (req, res) => {
       UserActivity.create({ userId: existingUser.id, activityTag: activityTags.LOGIN, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
       res.status(StatusCodes.OK).json({ token });
     } else {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>++++++++++++++++++==")
+
       // Create a new user if the mobile number is not found in the database
       const newUser = new User(req.body);
       const user = await newUser.save();
