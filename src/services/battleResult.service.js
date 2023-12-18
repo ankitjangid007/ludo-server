@@ -339,36 +339,36 @@ export const getBattleResultsByUserId = async (userId, limit, pageNumber) => {
             amount: info[i].totalPrize,
             participantName: info[i].participantInfo.userName,
             createdAt: info[i].createdAt,
-            battleId:info[i]._id
+            battleId: info[i]._id
           })
-        } else {
+        } else if (info[i].battleResultForCreator === 'I lost') {
           outputArray.push({
             userName: info[i].creatorInfo.userName,
             status: info[i].battleResultForCreator,
             amount: info[i].entryFee,
             participantName: info[i].participantInfo.userName,
             createdAt: info[i].createdAt,
-            battleId:info[i]._id
+            battleId: info[i]._id
           })
         }
       } else {
-        if (info[i].battleResultForCreator === 'I won') {
+        if (info[i].battleResultForParticipant === 'I won') {
           outputArray.push({
             userName: info[i].participantInfo.userName,
             status: info[i].battleResultForParticipant,
             amount: info[i].totalPrize,
             participantName: info[i].creatorInfo.userName,
             createdAt: info[i].createdAt,
-            battleId:info[i]._id
+            battleId: info[i]._id
           })
-        } else {
+        } else if (info[i].battleResultForParticipant === 'I lost') {
           outputArray.push({
             userName: info[i].participantInfo.userName,
             status: info[i].battleResultForParticipant,
             amount: info[i].entryFee,
             participantName: info[i].creatorInfo.userName,
             createdAt: info[i].createdAt,
-            battleId:info[i]._id
+            battleId: info[i]._id
           })
         }
       }
