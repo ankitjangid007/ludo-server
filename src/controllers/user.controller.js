@@ -29,7 +29,7 @@ export const createUserOrLogin = async (req, res) => {
       const token = generateToken(existingUser);
       // Activity log 
       UserActivity.create({ userId: existingUser.id, activityTag: activityTags.LOGIN, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
-      res.status(StatusCodes.OK).json({ token });
+      res.status(StatusCodes.OK).json({ token, role: "user",userId: existingUser.id });
     } else {
 
       // Create a new user if the mobile number is not found in the database
@@ -53,7 +53,7 @@ export const createUserOrLogin = async (req, res) => {
       UserActivity.create({ userId: user.id, activityTag: activityTags.SIGNUP, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
 
       res.cookie("userToken", token, { httpOnly: true });
-      res.status(StatusCodes.CREATED).json({ token, role: "user" });
+      res.status(StatusCodes.CREATED).json({ token, role: "user",userId: user.id});
     }
   } catch (error) {
     res
