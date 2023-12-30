@@ -5,6 +5,9 @@ import { getAllReferralsWithWalletController } from "../controllers/referral.con
 const router = express.Router();
 
 // Get my all referrals user and along with my referral wallet
-router.get("/details", verifyToken,getAllReferralsWithWalletController)
+router.get("/details", verifyToken, getAllReferralsWithWalletController);
+
+// Withdraw referral amount (Whenever user withdraw referral amount then add this referral amount into winning cash);
+router.post("/withdraw",verifyToken,)
 
 export default router;
