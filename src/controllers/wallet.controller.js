@@ -2,6 +2,7 @@ import { activityTags } from "../constants/activityTags.js";
 import UserActivity from "../models/userActivity.model.js";
 import { updateWallet, getWalletByUserId } from "../services/wallet.service.js";
 import { Types } from "mongoose";
+
 // Controller to get wallet by user ID
 export const getWallet = async (req, res) => {
   try {
@@ -19,7 +20,8 @@ export const getWallet = async (req, res) => {
 
 // Controller to deduct balance from a user's wallet
 export const updateWalletController = async (req, res) => {
-  const { userId, amount } = req.body;
+  const {  amount } = req.body;
+  const userId = new Types.ObjectId(req.decoded.userId);
 
   try {
     const wallet = await updateWallet(userId, amount);

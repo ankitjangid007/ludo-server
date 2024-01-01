@@ -43,7 +43,8 @@ export const getWinningCashWallet = async (req, res) => {
 
 // Controller to deduct balance from a user's wallet
 export const deductFromWinningCashWalletController = async (req, res) => {
-  const { userId, amount } = req.body;
+  const { amount } = req.body;
+  const userId = req.params.userId;
 
   try {
     const wallet = await deductFromWinningCashWallet(userId, amount);
