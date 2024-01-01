@@ -5,15 +5,21 @@ import {
   deductFromWinningCashWallet,
   getWinningCashWalletByUserId,
 } from "../services/winningCash.service.js";
-
+import { Types } from "mongoose";
 // Controller to create a wallet for a user
 export const createWinningCashWallet = async (req, res) => {
   try {
     const userId = req.params.userId;
 
     const wallet = await createWinCashWallet(userId);
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.WINING_CASH_WALLET_CREATED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.WINING_CASH_WALLET_CREATED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
     return res.status(201).json(wallet);
   } catch (error) {
     return res.status(400).json({ error: error.message });
@@ -23,7 +29,8 @@ export const createWinningCashWallet = async (req, res) => {
 // Controller to get wallet by user ID
 export const getWinningCashWallet = async (req, res) => {
   try {
-    const wallet = await getWinningCashWalletByUserId(req.params.userId);
+    const userId = new Types.ObjectId(req.decoded.userId);
+    const wallet = await getWinningCashWalletByUserId(userId);
     if (!wallet) {
       res.status(404).json({ error: "Wallet not found" });
     } else {
@@ -40,8 +47,14 @@ export const deductFromWinningCashWalletController = async (req, res) => {
 
   try {
     const wallet = await deductFromWinningCashWallet(userId, amount);
-    // Activity log 
-    UserActivity.create({ userId: req.decoded.userId, activityTag: activityTags.WINING_CASH_WALLET_UPDATED, requestBody: req.body, requestParams: req.params, requestQuery: req.query });
+    // Activity log
+    UserActivity.create({
+      userId: req.decoded.userId,
+      activityTag: activityTags.WINING_CASH_WALLET_UPDATED,
+      requestBody: req.body,
+      requestParams: req.params,
+      requestQuery: req.query,
+    });
     res.status(200).json(wallet);
   } catch (error) {
     res.status(500).json({ error: error.message });

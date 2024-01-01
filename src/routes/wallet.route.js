@@ -8,7 +8,7 @@ import { verifyToken } from "../middleware/VerifyToken.js";
 const router = express.Router();
 
 // Get wallet by user ID
-router.get("/:userId", verifyToken, getWallet);
+router.get("/", verifyToken, getWallet);
 
 // update wallet balance
 router.put("/update", verifyToken, updateWalletController);
