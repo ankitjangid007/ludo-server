@@ -3,10 +3,25 @@ import Withdrawal from "../models/withrawal.modal.js";
 
 export const createWithdrawal = async (paymentData) => {
   try {
+    const { amount, userId } = paymentData;
+
+    // Check amount is sufficient or not for withdrawal
+    const winningCashWallet = await WinningCash.findOne({ user: userId });
+
+    if (!winningCashWallet)
+      throw new Error("Couldn't found winning wallet for this request");
+
+    if (winningCashWallet.balance < amount)
+      throw new Error("You don't have sufficient amount for withdraw.");
+
+    // Deduct amount from winning wallet
+    winningCashWallet.balance -= amount;
+    await winningCashWallet.save();
+
     const payment = new Withdrawal(paymentData);
     return await payment.save();
   } catch (error) {
-    throw new Error("Couldn't create withrawal");
+    throw new Error(error);
   }
 };
 
@@ -14,17 +29,18 @@ export const getWithdrawal = async () => {
   try {
     return await Withdrawal.aggregate([
       {
-        '$lookup': {
-          'from': 'users',
-          'localField': 'userId',
-          'foreignField': '_id',
-          'as': 'userInfo'
-        }
-      }, {
-        '$unwind': {
-          'path': '$userInfo'
-        }
-      }
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$userInfo",
+        },
+      },
     ]);
   } catch (error) {
     throw new Error("Couldn't get Withdrawal request");
@@ -35,7 +51,7 @@ export const getWithdrawalByUserId = async (userId) => {
   try {
     return await Withdrawal.find({ userId }).exec();
   } catch (error) {
-    throw new Error("Couldn't get withrawal request");
+    throw new Error("Couldn't get withdrawal request");
   }
 };
 
