@@ -40,9 +40,8 @@ const initSocket = (server) => {
       });
     });
 
-    socket.on("payment-status", (data) => {
-      const { userId, requestId } = data;
-      io.to(users[userId]?.socketId).emit("fetch-payment-status", {
+    socket.on("payment-status", (data) => {      
+      io.emit("fetch-payment-status", {
         status: true,
         message: "Wallet has been updated.",
       });
